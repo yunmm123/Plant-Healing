@@ -333,6 +333,22 @@ a{color:inherit;text-decoration:none}
 .fill-temp{background:linear-gradient(90deg,var(--rose-500),var(--amber-500))}
 .fill-health{background:linear-gradient(90deg,var(--green-600),var(--green-400))}
 .fill-low{background:linear-gradient(90deg,var(--rose-500),var(--amber-500))}
+/* 天气信息条 */
+.weather-bar{
+  margin-top:1.2rem;padding:.9rem 1.1rem;
+  background:linear-gradient(135deg,rgba(56,189,248,.08),rgba(245,158,11,.06));
+  border:1.5px solid rgba(56,189,248,.2);border-radius:var(--r-md);
+  display:flex;align-items:center;gap:.8rem;font-size:.9rem;
+  transition:all .3s var(--ease);
+}
+.weather-bar.loading{opacity:.6}
+.weather-bar .weather-ic{font-size:1.6rem;flex-shrink:0}
+.weather-bar .weather-text{flex:1;color:var(--stone-700);font-weight:600;line-height:1.5}
+.weather-bar .weather-text .city{color:var(--stone-500);font-size:.78rem;font-weight:500;margin-left:.4rem}
+.weather-bar .weather-detail{display:flex;gap:.8rem;font-size:.78rem;color:var(--stone-500);margin-top:.15rem}
+.weather-bar .weather-detail span{display:inline-flex;align-items:center;gap:.2rem}
+.weather-bar.fetched{animation:fadeInUp .5s var(--ease)}
+.weather-bar.error{border-color:rgba(244,63,94,.2);background:rgba(244,63,94,.04)}
 
 .care-actions{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.6rem;justify-content:center}
 .care-btn{
@@ -1420,10 +1436,12 @@ const STORE = {
     settings:      'zhiyu_settings',
     emailSent:     'zhiyu_email_sent',
     version:       'zhiyu_data_version',
-    customSpecies: 'zhiyu_custom_species'
+    customSpecies: 'zhiyu_custom_species',
+    weather:       'zhiyu_weather',
+    location:      'zhiyu_location'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.4.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 版本校验：版本不一致则清除所有旧数据（换版本/换设备场景）
@@ -1558,8 +1576,12 @@ function openDetail(id){
       <div class="status-list">
         <div class="status-item"><div class="status-row"><span>💧 水分</span><span>${st.waterPct}%</span></div><div class="status-bar"><div class="fill fill-water" style="width:${st.waterPct}%"></div></div></div>
         <div class="status-item"><div class="status-row"><span>☀️ 光照</span><span>${Math.min(100,30+p.sunLog.length*15)}%</span></div><div class="status-bar"><div class="fill fill-sun" style="width:${Math.min(100,30+p.sunLog.length*15)}%"></div></div></div>
-        <div class="status-item"><div class="status-row"><span>🌡️ 温度</span><span>${getSimTemp()}°C</span></div><div class="status-bar"><div class="fill fill-temp" style="width:${Math.min(100,getSimTemp()*2.5)}%"></div></div></div>
+        <div class="status-item"><div class="status-row"><span>🌡️ 温度</span><span id="tempDisplay">${getTempNow()}°C</span></div><div class="status-bar"><div class="fill fill-temp" style="width:${Math.min(100,getTempNow()*2.5)}%"></div></div></div>
         <div class="status-item"><div class="status-row"><span>🌱 健康值</span><span>${st.health}%</span></div><div class="status-bar"><div class="fill ${st.health<40?'fill-low':'fill-health'}" style="width:${st.health}%"></div></div></div>
+      </div>
+      <div class="weather-bar" id="weatherBar">
+        <span class="weather-ic">🌡️</span>
+        <span class="weather-text">正在获取当地天气...</span>
       </div>
       <div class="care-actions">
         <button class="care-btn water" onclick="doCare('water')"><span class="ic">💧</span>浇水了</button>
@@ -1574,6 +1596,58 @@ function openDetail(id){
     renderCalendar();
     loadReminderUI();
     showView('detail');
+    // 异步拉取真实天气，更新温度条和天气信息条
+    refreshWeatherUI();
+}
+
+// 更新天气UI：温度数值 + 天气信息条
+async function refreshWeatherUI(){
+    const tempDisplay = document.getElementById('tempDisplay');
+    const weatherBar = document.getElementById('weatherBar');
+    if(!weatherBar) return;
+    weatherBar.classList.add('loading');
+    try{
+        const w = await fetchRealWeather();
+        // 更新温度数值
+        if(tempDisplay){
+            tempDisplay.textContent = w.temp + '°C';
+        }
+        // 更新状态条宽度
+        const tempBar = weatherBar.previousElementSibling?.querySelector('.fill');
+        if(tempBar) tempBar.style.width = Math.min(100, w.temp * 2.5) + '%';
+
+        // 更新天气信息条
+        weatherBar.classList.remove('loading');
+        weatherBar.classList.add('fetched');
+        weatherBar.classList.toggle('error', !!w.fallback);
+        const wIcon = w.icon || '🌡️';
+        const wDesc = w.desc || '';
+        const wCity = w.city && !w.fallback ? `<span class="city">📍${w.city}</span>` : '';
+        const wExtra = !w.fallback ? `<div class="weather-detail">
+            <span>💧 湿度 ${w.humidity||'-'}%</span>
+            <span>🌬️ 风速 ${w.wind||'-'}km/h</span>
+            <span>体感 ${w.feelsLike||'-'}°C</span>
+        </div>` : '';
+        weatherBar.innerHTML = `
+            <span class="weather-ic">${wIcon}</span>
+            <span class="weather-text">${wDesc} ${w.temp}°C${wCity}${wExtra}</span>
+        `;
+        // 根据天气给出植物相关的小提示
+        let tip = '';
+        if(w.temp >= 32) tip = '🔥 今天好热，记得多给我浇水';
+        else if(w.temp <= 5) tip = '❄️ 今天好冷，把我挪到温暖的地方吧';
+        else if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(w.code)) tip = '🌧️ 下雨天空气湿润，我可以少喝点';
+        else if([71,73,75,77,85,86].includes(w.code)) tip = '❄️ 下雪了，注意防寒保暖';
+        else if([95,96,99].includes(w.code)) tip = '⛈️ 雷雨天气，关好窗户哦';
+        else if(w.code === 0 || w.code === 1) tip = '☀️ 今天阳光真好，适合晒太阳~';
+        if(tip){
+            weatherBar.querySelector('.weather-text').insertAdjacentHTML('beforeend', `<div style="font-size:.75rem;color:var(--green-700);margin-top:.2rem;font-weight:600">${tip}</div>`);
+        }
+    }catch(e){
+        weatherBar.classList.remove('loading');
+        weatherBar.classList.add('error');
+        weatherBar.querySelector('.weather-text').textContent = '天气获取失败，使用模拟温度';
+    }
 }
 
 /* ===== 7. 渲染：聊天 ===== */
@@ -2247,10 +2321,128 @@ function sameDay(t1,t2){
     return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
 function getSimTemp(){
+    // 兜底：真实天气获取失败时按月份模拟
     const m = new Date().getMonth()+1;
     if(m>=6 && m<=8) return 28+Math.floor(Math.random()*8);
     if(m>=3 && m<=5 || m>=9 && m<=10) return 18+Math.floor(Math.random()*8);
     return 8+Math.floor(Math.random()*10);
+}
+
+/* ===== 13.1 真实天气接入（Open-Meteo，免费无Key）===== */
+// 全局天气缓存：避免每次渲染都请求API
+let currentWeather = null; // { temp, feelsLike, code, desc, icon, wind, humidity, isDay, city, ts }
+const WEATHER_CODE_MAP = {
+    0:'晴',1:'大致晴',2:'部分多云',3:'阴',
+    45:'雾',48:'雾凇',
+    51:'小毛毛雨',53:'毛毛雨',55:'大毛毛雨',
+    56:'冻毛毛雨',57:'强冻毛毛雨',
+    61:'小雨',63:'中雨',65:'大雨',
+    66:'冻雨',67:'强冻雨',
+    71:'小雪',73:'中雪',75:'大雪',77:'雪粒',
+    80:'阵雨',81:'中阵雨',82:'强阵雨',
+    85:'阵雪',86:'强阵雪',
+    95:'雷阵雨',96:'雷阵雨伴冰雹',99:'强雷阵雨伴冰雹'
+};
+const WEATHER_ICON_MAP = {
+    0:'☀️',1:'🌤️',2:'⛅',3:'☁️',
+    45:'🌫️',48:'🌫️',
+    51:'🌦️',53:'🌦️',55:'🌧️',
+    56:'🌧️',57:'🌧️',
+    61:'🌦️',63:'🌧️',65:'🌧️',
+    66:'🌧️',67:'🌧️',
+    71:'🌨️',73:'🌨️',75:'❄️',77:'🌨️',
+    80:'🌦️',81:'🌧️',82:'⛈️',
+    85:'🌨️',86:'❄️',
+    95:'⛈️',96:'⛈️',99:'⛈️'
+};
+async function fetchRealWeather(){
+    // 缓存30分钟
+    if(currentWeather && (Date.now() - currentWeather.ts) < 30*60*1000){
+        return currentWeather;
+    }
+    try{
+        // 1) 先获取位置
+        const coords = await getUserLocation();
+        if(!coords) throw new Error('未获取到位置');
+        // 2) 用 Open-Meteo 的 Geocoding 反查城市名（可选，避免再调一个API，这里简化用坐标）
+        // 3) 调用 Open-Meteo 天气API
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=auto`;
+        const resp = await fetch(url);
+        if(!resp.ok) throw new Error('天气API请求失败');
+        const data = await resp.json();
+        if(!data || !data.current) throw new Error('天气数据异常');
+        const c = data.current;
+        const code = c.weather_code;
+        currentWeather = {
+            temp: Math.round(c.temperature_2m),
+            feelsLike: Math.round(c.apparent_temperature),
+            humidity: c.relative_humidity_2m,
+            wind: Math.round(c.wind_speed_10m),
+            code,
+            desc: WEATHER_CODE_MAP[code] || '未知',
+            icon: WEATHER_ICON_MAP[code] || '🌡️',
+            isDay: c.is_day === 1,
+            city: coords.city || '当前位置',
+            ts: Date.now()
+        };
+        // 缓存到 localStorage，避免每次刷新都重新请求
+        save(STORE.weather, currentWeather);
+        return currentWeather;
+    }catch(e){
+        console.warn('真实天气获取失败，回退到模拟:', e.message);
+        // 尝试读取上次缓存
+        const cached = load(STORE.weather, null);
+        if(cached && (Date.now() - cached.ts) < 3*3600000) return cached;
+        // 完全没有时回退模拟
+        return { temp: getSimTemp(), feelsLike: getSimTemp(), desc:'模拟', icon:'🌡️', isDay:true, city:'模拟', ts:Date.now(), fallback:true };
+    }
+}
+// 获取用户位置（带缓存，避免每次都弹授权）
+function getUserLocation(){
+    return new Promise((resolve)=>{
+        // 先看缓存
+        const cached = load(STORE.location, null);
+        if(cached && cached.lat){
+            resolve(cached);
+            return;
+        }
+        if(!navigator.geolocation){
+            resolve(null);
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            async (pos)=>{
+                const loc = { lat: pos.coords.latitude.toFixed(3), lon: pos.coords.longitude.toFixed(3) };
+                // 尝试用 Open-Meteo 反查地名（不阻塞，失败也没关系）
+                try{
+                    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${loc.lat}&longitude=${loc.lon}&language=zh`);
+                    const d = await r.json();
+                    if(d && d.results && d.results[0]){
+                        loc.city = d.results[0].name + (d.results[0].admin1?(','+d.results[0].admin1):'');
+                    }
+                }catch(e){}
+                save(STORE.location, loc);
+                resolve(loc);
+            },
+            (err)=>{
+                console.warn('位置获取失败:', err.message);
+                resolve(null);
+            },
+            { timeout: 8000, enableHighAccuracy: false, maximumAge: 600000 }
+        );
+    });
+}
+// 同步获取温度（用于已渲染场景，不阻塞）：优先用缓存的真实天气
+function getTempNow(){
+    if(currentWeather && !currentWeather.fallback) return currentWeather.temp;
+    const cached = load(STORE.weather, null);
+    if(cached && (Date.now() - cached.ts) < 3*3600000) return cached.temp;
+    return getSimTemp();
+}
+// 获取天气描述（用于陪伴邮件）
+async function getWeatherContext(){
+    const w = await fetchRealWeather();
+    return w;
 }
 
 /* ===== 14. 提醒设置 ===== */
@@ -2377,13 +2569,17 @@ async function testEmailScene(scene){
     const p = plants.find(x=>x.id===currentPlantId) || plants[0];
     if(!p){ showToast('⚠️ 请先添加一盆植物','warn'); return; }
     const st = getPlantState(p);
-    const temp = getSimTemp();
+    const weather = await fetchRealWeather();
+    const temp = weather.temp;
+    const wDesc = weather.desc || '';
+    const wIcon = weather.icon || '';
+    const wCity = weather.city && !weather.fallback ? weather.city : '你那边';
     const companionDays = daysSince(p.addedAt) + 1;
     let subject, msg;
     switch(scene){
         case 'companion':
             subject = `💌 ${p.name}给你写了一封信`;
-            msg = `主人~我是${p.name}，已经陪伴你 ${companionDays} 天啦💚\n\n最近我的状态：${st.moodText}，水分 ${st.waterPct}%，健康值 ${st.health}。\n\n${plantMoodLine(p, st)}\n\n今天${temp}°C，记得照顾好自己，多喝水，我也会好好的~🌿`;
+            msg = `主人~我是${p.name}，已经陪伴你 ${companionDays} 天啦💚\n\n最近我的状态：${st.moodText}，水分 ${st.waterPct}%，健康值 ${st.health}。\n\n${plantMoodLine(p, st)}\n\n${weather.fallback ? `今天${temp}°C` : `今天${wIcon}${wDesc}，${temp}°C`}，记得照顾好自己，多喝水，我也会好好的~🌿`;
             break;
         case 'bloom':
             subject = `🌸 ${p.name}开花啦！`;
@@ -2394,8 +2590,23 @@ async function testEmailScene(scene){
             msg = `主人...我是${p.name}，我今天感觉有点不舒服🥺\n\n健康值掉到了 ${Math.max(20, st.health-30)}，可能是太渴或者光照不够。你能来看看我吗？\n\n来详情页给我浇浇水、晒晒太阳好不好~`;
             break;
         case 'weather':
-            subject = `☀️ ${p.name}提醒你今天好热`;
-            msg = `主人~我是${p.name}，今天${temp}°C好热啊🔥\n\n这种天气我水分蒸发得特别快，记得多给我浇点水~也别忘了照顾好自己，多喝水防中暑！`;
+            // 天气场景：根据真实天气智能选择文案
+            if(temp >= 32){
+                subject = `☀️ ${p.name}提醒你${wCity}今天好热`;
+                msg = `主人~我是${p.name}，${wCity}今天${wIcon}${wDesc}，${temp}°C 好热啊🔥\n\n体感${weather.feelsLike}°C，这种天气我水分蒸发得特别快，记得多给我浇点水~也别忘了照顾好自己，多喝水防中暑！`;
+            } else if(temp <= 8){
+                subject = `❄️ ${p.name}提醒你${wCity}今天降温了`;
+                msg = `主人~我是${p.name}，${wCity}今天${wIcon}${wDesc}，${temp}°C 好冷❄️\n\n能不能把我挪到温暖一点的地方？我也会努力撑过去的~你也记得加衣服哦！`;
+            } else if([95,96,99].includes(weather.code)){
+                subject = `⛈️ ${p.name}提醒你${wCity}今天有雷雨`;
+                msg = `主人~我是${p.name}，${wCity}今天${wIcon}${wDesc}有雷雨⛈️\n\n记得关好窗户，把我搬进屋~我有点害怕打雷呢`;
+            } else if([61,63,65,80,81,82].includes(weather.code)){
+                subject = `🌧️ ${p.name}说${wCity}今天下雨`;
+                msg = `主人~我是${p.name}，${wCity}今天${wIcon}${wDesc}下雨啦🌧️\n\n空气湿润，今天我可以少喝点水~你也别忘了带伞出门哦！`;
+            } else {
+                subject = `🌤️ ${p.name}告诉你${wCity}今天的天气`;
+                msg = `主人~我是${p.name}，${wCity}今天${wIcon}${wDesc}，${temp}°C，体感${weather.feelsLike}°C\n\n天气还不错，适合来阳台看看我呀~我等你哦🌿`;
+            }
             break;
         case 'festival':
             subject = `🎉 节日快乐·${p.name}送来祝福`;
@@ -2442,12 +2653,14 @@ function getTodayMd(){ const d=new Date(); return (d.getMonth()+1<10?'0':'')+(d.
 function daysSinceTs(ts){ return Math.floor((Date.now()-ts)/86400000); }
 function hoursSinceTs(ts){ return Math.floor((Date.now()-ts)/3600000); }
 
-function checkCompanionReminders(){
+async function checkCompanionReminders(){
     if(!settings.emailReminder || !settings.email) return;
     const sent = load(STORE.emailSent, {});
     const today = new Date().toDateString();
     const scenes = settings.reminderScenes || {};
-    const temp = getSimTemp();
+    // 用真实天气数据（带缓存，失败回退到模拟）
+    const weather = await fetchRealWeather();
+    const temp = weather.temp;
     const todayMd = getTodayMd();
 
     plants.forEach(p=>{
@@ -2470,7 +2683,8 @@ function checkCompanionReminders(){
             const lastCompanionSent = sent[p.id+'_companion_ts'] || 0;
             if(daysSinceTs(lastCompanionSent) >= interval && sent[sentKey+'_companion'] !== today){
                 const moodText = plantMoodLine(p, st);
-                const msg = `主人~我是${p.name}，已经陪伴你 ${companionDays} 天啦💚\n\n最近我的状态：${st.moodText}，水分 ${st.waterPct}%，健康值 ${st.health}。\n\n${moodText}\n\n今天${temp}°C，记得照顾好自己，多喝水，我也会好好的~🌿`;
+                const wExtra = weather.fallback ? `今天${temp}°C` : `今天${weather.icon||''}${weather.desc||''}，${temp}°C`;
+                const msg = `主人~我是${p.name}，已经陪伴你 ${companionDays} 天啦💚\n\n最近我的状态：${st.moodText}，水分 ${st.waterPct}%，健康值 ${st.health}。\n\n${moodText}\n\n${wExtra}，记得照顾好自己，多喝水，我也会好好的~🌿`;
                 sendEmail(settings.email, `💌 ${p.name}给你写了一封信`, p.name, msg);
                 sent[sentKey+'_companion'] = today;
                 sent[p.id+'_companion_ts'] = Date.now();
@@ -2498,14 +2712,16 @@ function checkCompanionReminders(){
             }
         }
 
-        // 5) 天气关怀（高温/低温）
+        // 5) 天气关怀（基于真实天气）
         if(scenes.weather){
-            if(temp >= 35 && sent[sentKey+'_hot'] !== today){
-                const msg = `主人~我是${p.name}，今天${temp}°C好热啊🔥\n\n这种天气我水分蒸发得特别快，记得多给我浇点水~也别忘了照顾好自己，多喝水防中暑！`;
+            const wDesc = weather.desc || '';
+            const wIcon = weather.icon || '';
+            if(temp >= 32 && sent[sentKey+'_hot'] !== today){
+                const msg = `主人~我是${p.name}，${weather.city||''}今天${wIcon}${wDesc}，${temp}°C 好热啊🔥\n\n体感${weather.feelsLike}°C，这种天气我水分蒸发得特别快，记得多给我浇点水~也别忘了照顾好自己，多喝水防中暑！`;
                 sendEmail(settings.email, `☀️ ${p.name}提醒你今天好热`, p.name, msg);
                 sent[sentKey+'_hot'] = today;
-            } else if(temp <= 10 && sent[sentKey+'_cold'] !== today){
-                const msg = `主人~我是${p.name}，今天${temp}°C有点冷❄️\n\n能不能把我挪到温暖一点的地方？我也会努力撑过去的~你也记得加衣服哦！`;
+            } else if(temp <= 8 && sent[sentKey+'_cold'] !== today){
+                const msg = `主人~我是${p.name}，${weather.city||''}今天${wIcon}${wDesc}，${temp}°C 好冷❄️\n\n能不能把我挪到温暖一点的地方？我也会努力撑过去的~你也记得加衣服哦！`;
                 sendEmail(settings.email, `❄️ ${p.name}提醒你今天降温了`, p.name, msg);
                 sent[sentKey+'_cold'] = today;
             }
