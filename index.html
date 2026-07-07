@@ -2231,13 +2231,20 @@ function submitDiary(){
 }
 function renderDiary(){
     const filter = document.getElementById('diaryPlantFilter');
-    // 只在 options 数量变化时才重新渲染，避免重置用户的选择
-    const currentVal = filter.value;
-    const expectedOptions = plants.length + 1; // 全部植物 + 每盆植物
-    if(filter.options.length !== expectedOptions){
-        filter.innerHTML = '<option value="">🌿 全部植物</option>' + plants.map(p=>`<option value="${p.id}">${SPECIES[p.species].emoji} ${esc(p.name)}</option>`).join('');
-        // 尝试保留之前的选择
-        if(currentVal) filter.value = currentVal;
+    if(!filter) return;
+    // 记录用户当前选择（onchange 触发前 select.value 已更新为新选择）
+    const prevVal = filter.value;
+    // 重建 options：每次都重建以保证数据最新，并安全处理自定义品种（不在 SPECIES 里）
+    let optsHTML = '<option value="">🌿 全部植物</option>';
+    plants.forEach(p=>{
+        const sp = SPECIES[p.species];
+        const emoji = sp ? sp.emoji : '🪴';
+        optsHTML += `<option value="${p.id}">${emoji} ${esc(p.name)}</option>`;
+    });
+    filter.innerHTML = optsHTML;
+    // 恢复用户之前的选择（前提是该植物仍存在）
+    if(prevVal && Array.from(filter.options).some(o=>o.value===prevVal)){
+        filter.value = prevVal;
     }
     const pid = filter.value;
     const list = pid ? diary.filter(d=>d.plantId===pid) : diary;
@@ -2247,8 +2254,9 @@ function renderDiary(){
         return;
     }
     tl.innerHTML = list.slice(0,40).map(d=>{
-        const emoji = d.species ? SPECIES[d.species].emoji : '';
-        const tagText = d.auto ? (d.type==='water'?'💧 浇水':d.type==='sun'?'☀️ 晒太阳':'️ 修剪') : '✍️ 手写';
+        const sp = SPECIES[d.species];
+        const emoji = sp ? sp.emoji : '🪴';
+        const tagText = d.auto ? (d.type==='water'?'💧 浇水':d.type==='sun'?'☀️ 晒太阳':'✂️ 修剪') : '✍️ 手写';
         return `
           <div class="diary-entry ${d.type||''}">
             <div class="date">${d.date} · ${emoji} ${esc(d.plantName||'')}</div>
