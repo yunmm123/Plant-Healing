@@ -602,6 +602,33 @@ a{color:inherit;text-decoration:none}
 .species-opt .em{font-size:2rem;display:block}
 .species-opt .n{font-size:.84rem;font-weight:800;color:var(--green-900);margin-top:.25rem}
 .species-opt .p{font-size:.7rem;color:var(--stone-400);margin-top:.15rem;line-height:1.3}
+.species-opt.custom-opt{border-style:dashed;color:var(--green-700)}
+.species-opt.custom-opt:hover{border-color:var(--green-400);background:var(--green-50)}
+.species-opt.custom-opt .em{color:var(--green-600)}
+.custom-species-panel{
+  display:none;margin-top:.8rem;padding:1.1rem;
+  background:var(--green-50);border:1.5px dashed var(--green-200);border-radius:var(--r-md);
+  animation:fadeInUp .3s var(--ease);
+}
+.custom-species-panel.show{display:block}
+.custom-species-panel .field-mini{margin-bottom:.7rem}
+.custom-species-panel .field-mini label{display:block;font-size:.8rem;font-weight:700;color:var(--green-800);margin-bottom:.3rem}
+.custom-species-panel .field-mini input,
+.custom-species-panel .field-mini select{
+  width:100%;padding:.55rem .8rem;border:1.5px solid var(--green-100);border-radius:8px;
+  outline:none;background:#fff;font-size:.9rem;transition:border-color .2s;
+}
+.custom-species-panel .field-mini input:focus,
+.custom-species-panel .field-mini select:focus{border-color:var(--green-400)}
+.emoji-pick{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.3rem}
+.emoji-pick span{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:8px;cursor:pointer;
+  border:1.5px solid var(--green-100);background:#fff;font-size:1.3rem;
+  transition:all .2s var(--ease);
+}
+.emoji-pick span:hover{border-color:var(--green-300);transform:scale(1.08)}
+.emoji-pick span.selected{border-color:var(--green-500);background:var(--green-50);box-shadow:0 0 0 2px rgba(34,197,94,.15)}
 .photo-preview{
   margin-top:.6rem;width:100%;height:140px;border-radius:var(--r-md);
   border:2px dashed var(--green-200);background:var(--green-50);
@@ -926,7 +953,10 @@ a{color:inherit;text-decoration:none}
 <div id="view-detail" class="view">
   <section class="section" style="padding-top:100px">
     <div class="container">
-      <button class="detail-back" onclick="showView('list')">← 回到我的植物</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.6rem">
+        <button class="detail-back" onclick="showView('list')" style="margin:0">← 回到我的植物</button>
+        <button class="btn btn-ghost" onclick="deletePlant()" style="padding:.55rem 1.1rem;font-size:.85rem;border-color:var(--rose-400);color:var(--rose-500)">🗑️ 删除这盆植物</button>
+      </div>
       <div class="detail-grid">
         <div>
           <div class="detail-hero" id="detailHero"></div>
@@ -1023,6 +1053,50 @@ a{color:inherit;text-decoration:none}
     <div class="field">
       <label>选个品种 *</label>
       <div class="species-grid" id="speciesGrid"></div>
+      <div class="custom-species-panel" id="customSpeciesPanel">
+        <div class="field-mini">
+          <label>品种名称 *</label>
+          <input type="text" id="customName" placeholder="比如：琴叶榕、橡皮树、白掌" maxlength="10">
+        </div>
+        <div class="field-mini">
+          <label>选一个emoji表情</label>
+          <div class="emoji-pick" id="emojiPick">
+            <span class="selected" data-e="🪴">🪴</span>
+            <span data-e="🌿">🌿</span>
+            <span data-e="🌱">🌱</span>
+            <span data-e="🍃">🍃</span>
+            <span data-e="🍂">🍂</span>
+            <span data-e="🌷">🌷</span>
+            <span data-e="🌹">🌹</span>
+            <span data-e="🌺">🌺</span>
+            <span data-e="🌻">🌻</span>
+            <span data-e="🌼">🌼</span>
+            <span data-e="🌸">🌸</span>
+            <span data-e="💐">💐</span>
+            <span data-e="🌳">🌳</span>
+            <span data-e="🌴">🌴</span>
+            <span data-e="🌵">🌵</span>
+          </div>
+        </div>
+        <div class="field-mini">
+          <label>浇水周期（天）</label>
+          <input type="number" id="customWater" min="1" max="30" value="7">
+        </div>
+        <div class="field-mini">
+          <label>光照需求</label>
+          <select id="customLight">
+            <option value="喜阳">喜阳</option>
+            <option value="散射光">散射光</option>
+            <option value="耐阴">耐阴</option>
+            <option value="强喜阳">强喜阳</option>
+          </select>
+        </div>
+        <div class="field-mini">
+          <label>性格设定（可选）</label>
+          <input type="text" id="customPersonality" placeholder="比如：活泼好动、文静内敛..." maxlength="30">
+        </div>
+        <button type="button" class="btn btn-ghost" onclick="confirmCustomSpecies()" style="width:100%;justify-content:center;margin-top:.4rem">✓ 添加并选中</button>
+      </div>
     </div>
     <div class="field">
       <label>它的照片（可选）</label>
@@ -1138,22 +1212,40 @@ const EMAILJS_CONFIG = {
 const SPECIES = {
     '绿萝':   { emoji:'🌿', waterCycle:6,  light:'散射光', personality:'温柔乖巧，话不多但很贴心' },
     '仙人掌': { emoji:'🌵', waterCycle:12, light:'喜阳',   personality:'嘴硬心软，嘴上抱怨其实很依赖你' },
-    '多肉':   { emoji:'', waterCycle:12, light:'喜阳',   personality:'慵懒可爱，爱睡觉，说话慢悠悠' },
+    '多肉':   { emoji:'🪴', waterCycle:12, light:'喜阳',   personality:'慵懒可爱，爱睡觉，说话慢悠悠' },
     '月季':   { emoji:'🌸', waterCycle:4,  light:'喜阳',   personality:'活泼爱美，开花时特别开心，爱炫耀' },
     '龟背竹': { emoji:'🌱', waterCycle:8,  light:'散射光', personality:'沉稳文艺，像个安静的朋友' },
     '向日葵': { emoji:'🌻', waterCycle:2,  light:'强喜阳', personality:'元气满满，永远充满正能量' },
-    '薄荷':   { emoji:'🍃', waterCycle:2,  light:'喜阳',   personality:'清新活泼，长得快，爱说话' }
+    '薄荷':   { emoji:'🍃', waterCycle:2,  light:'喜阳',   personality:'清新活泼，长得快，爱说话' },
+    '吊兰':   { emoji:'🌾', waterCycle:5,  light:'散射光', personality:'随和乐观，像邻家朋友一样亲切' },
+    '芦荟':   { emoji:'🪴', waterCycle:10, light:'喜阳',   personality:'实用主义，低调靠谱，偶尔傲娇' },
+    '虎尾兰': { emoji:'🌿', waterCycle:10, light:'耐阴',   personality:'酷酷的，话少但句句在理' },
+    '富贵竹': { emoji:'🎋', waterCycle:5,  light:'散射光', personality:'优雅矜持，带着书卷气' },
+    '茉莉花': { emoji:'🌼', waterCycle:3,  light:'喜阳',   personality:'温柔浪漫，爱唱歌，香味治愈' },
+    '发财树': { emoji:'🌳', waterCycle:10, light:'散射光', personality:'稳重踏实，自带财运光环' },
+    '常春藤': { emoji:'🍃', waterCycle:5,  light:'耐阴',   personality:'攀爬高手，爱冒险，精力旺盛' }
 };
 
 // 成就定义
 const ACHIEVEMENTS = [
-    { id:'first_plant',  icon:'', title:'初次相遇', desc:'添加第一盆植物' },
-    { id:'first_water',  icon:'💧', title:'喝水啦',   desc:'第一次给植物浇水' },
-    { id:'companion_7',  icon:'', title:'陪伴七天', desc:'和植物相处满 7 天' },
-    { id:'first_bloom',  icon:'🌸', title:'第一次开花', desc:'见证月季第一次开花' },
-    { id:'plant_doctor', icon:'', title:'植物医生', desc:'成功救回一株生病的植物' },
-    { id:'small_forest', icon:'🏡', title:'小森林',  desc:'拥有 5 盆以上植物' },
-    { id:'diary_master',  icon:'📝', title:'日记达人', desc:'写了 10 篇日记' }
+    { id:'first_plant',   icon:'🌱', title:'初次相遇', desc:'添加第一盆植物' },
+    { id:'first_water',   icon:'💧', title:'喝水啦',   desc:'第一次给植物浇水' },
+    { id:'first_sun',     icon:'☀️', title:'阳光浴',   desc:'第一次给植物晒太阳' },
+    { id:'first_prune',   icon:'✂️', title:'修剪师',   desc:'第一次修剪植物' },
+    { id:'companion_7',   icon:'💚', title:'陪伴七天', desc:'和植物相处满 7 天' },
+    { id:'companion_30',  icon:'🌟', title:'月度陪伴', desc:'和植物相处满 30 天' },
+    { id:'companion_100', icon:'🏆', title:'百日之约', desc:'和植物相处满 100 天' },
+    { id:'first_bloom',   icon:'🌸', title:'第一次开花', desc:'见证植物第一次开花' },
+    { id:'plant_doctor',  icon:'🩺', title:'植物医生', desc:'成功救回一株生病的植物' },
+    { id:'small_forest',  icon:'🏡', title:'小森林',  desc:'拥有 5 盆以上植物' },
+    { id:'big_garden',    icon:'🌳', title:'大花园',  desc:'拥有 10 盆以上植物' },
+    { id:'diary_master',  icon:'📝', title:'日记达人', desc:'写了 10 篇日记' },
+    { id:'diary_expert',  icon:'✍️', title:'日记专家', desc:'写了 30 篇日记' },
+    { id:'green_thumb',   icon:'👍', title:'绿手指',   desc:'累计浇水 50 次' },
+    { id:'sun_master',    icon:'🌞', title:'阳光大师', desc:'累计晒太阳 30 次' },
+    { id:'chat_lover',    icon:'💬', title:'话痨之交', desc:'和植物聊天 50 次' },
+    { id:'all_species',   icon:'🌿', title:'收集图鉴', desc:'尝试过 5 种不同品种' },
+    { id:'perfect_care',  icon:'✨', title:'完美照料', desc:'让植物健康值达到 100' }
 ];
 
 /* ===== AI 话术库（每品种 15+ 条，覆盖多场景） ===== */
@@ -1253,18 +1345,34 @@ const DIALOGUE = {
 
 /* ===== 2. 数据层 ===== */
 const STORE = {
-    plants:    'zhiyu_plants',
-    diary:     'zhiyu_diary',
-    achv:      'zhiyu_achievements',
-    settings:  'zhiyu_settings',
-    emailSent: 'zhiyu_email_sent'
+    plants:        'zhiyu_plants',
+    diary:         'zhiyu_diary',
+    achv:          'zhiyu_achievements',
+    settings:      'zhiyu_settings',
+    emailSent:     'zhiyu_email_sent',
+    version:       'zhiyu_data_version',
+    customSpecies: 'zhiyu_custom_species'
 };
+// 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
+const APP_VERSION = '2.1.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+// 版本校验：版本不一致则清除所有旧数据（换版本/换设备场景）
+(function checkVersion(){
+    const savedVer = localStorage.getItem(STORE.version);
+    if(savedVer !== APP_VERSION){
+        Object.values(STORE).forEach(k => { if(k !== STORE.version) localStorage.removeItem(k); });
+        localStorage.setItem(STORE.version, APP_VERSION);
+        console.log('数据已重置为版本', APP_VERSION);
+    }
+})();
 
 let plants = load(STORE.plants, []);
 let diary = load(STORE.diary, []);
 let unlockedAchv = load(STORE.achv, []);
+// 自定义品种：用户可自行扩展品种库（同设备同版本保留）
+let customSpecies = load(STORE.customSpecies, []);
+customSpecies.forEach((s, i) => { if(!SPECIES[s.name]) SPECIES[s.name] = s; });
 const DEFAULT_AI_KEY = '6c79eb5b51884d4a9661de32564482db.92iWMe9g8yak4GoY';
 let settings = load(STORE.settings, { emailReminder:false, email:'', reminderDays:0, pushEnabled:false, aiApiKey:DEFAULT_AI_KEY, aiEnabled:true });
 // 老用户迁移：如果之前没设置过AI相关字段，默认开启AI并填入Key
@@ -1380,7 +1488,7 @@ function openDetail(id){
         <div class="status-item"><div class="status-row"><span>🌱 健康值</span><span>${st.health}%</span></div><div class="status-bar"><div class="fill ${st.health<40?'fill-low':'fill-health'}" style="width:${st.health}%"></div></div></div>
       </div>
       <div class="care-actions">
-        <button class="care-btn water" onclick="doCare('water')"><span class="ic"></span>浇水了</button>
+        <button class="care-btn water" onclick="doCare('water')"><span class="ic">💧</span>浇水了</button>
         <button class="care-btn sun" onclick="doCare('sun')"><span class="ic">☀️</span>晒太阳</button>
         <button class="care-btn prune" onclick="doCare('prune')"><span class="ic">✂️</span>修剪/施肥</button>
       </div>`;
@@ -1401,7 +1509,7 @@ function renderChat(){
     const box = document.getElementById('chatMessages');
     if(!p.chat) p.chat = [];
     if(!p.chat.length){
-        const lib = DIALOGUE[p.species];
+        const lib = DIALOGUE[p.species] || DIALOGUE['绿萝'];
         const greet = lib.greeting[Math.floor(Math.random()*lib.greeting.length)];
         p.chat.push({ from:'plant', text:greet, ts:Date.now() });
     }
@@ -1457,26 +1565,44 @@ async function callAI(plant, userText){
     const spec = SPECIES[plant.species];
     const personality = spec.personality;
     
-    // 构建系统提示词 - 让AI扮演植物角色
+    // 构建系统提示词 - 让AI扮演植物角色（强化状态感知，避免与状态矛盾的回答）
+    const waterLevel = st.waterPct;
+    let waterStatusText;
+    if(st.mood==='veryThirsty') waterStatusText = `水分只剩${waterLevel}%，非常渴，迫切想喝水`;
+    else if(st.mood==='thirsty') waterStatusText = `水分${waterLevel}%，有点渴，但还能撑一会`;
+    else if(waterLevel >= 80) waterStatusText = `水分充足（${waterLevel}%），刚喝饱水，完全不渴，不要再说想喝水`;
+    else waterStatusText = `水分${waterLevel}%，状态正常，不渴`;
+
+    const moodGuides = [];
+    if(st.mood==='veryThirsty') moodGuides.push('你现在非常渴');
+    if(st.mood==='thirsty') moodGuides.push('你现在有点渴');
+    if(st.mood==='happy') moodGuides.push('你现在心情很好');
+    if(plant.sick) moodGuides.push('你现在生病了，有点虚弱');
+    if(plant.blooming) moodGuides.push('你正在开花，特别开心');
+    if(plant.sleeping) moodGuides.push('你现在在休眠，想睡觉');
+
     const systemPrompt = `你是一盆真实的${plant.species}，名字叫"${plant.name}"。
 你的性格特点：${personality}
 
-当前状态：
-- 品种：${plant.species}
-- 浇水周期：${spec.waterCycle}天
-- 光照需求：${spec.light}
+【关键状态】（必须严格按照这些状态回答，不能与状态矛盾）
+- 品种：${plant.species}（建议${spec.waterCycle}天浇一次水，喜${spec.light}）
 - 距离上次浇水：${st.days}天
-- 当前状态：${st.moodText}
+- ${waterStatusText}
+- 当前心情：${st.moodText}
 - 健康值：${st.health}/100
+- ${moodGuides.join('；')}
 
-要求：
-1. 完全以${plant.species}的第一人称视角说话，你就是这盆植物本身
+【严格规则】
+1. 完全以${plant.species}的第一人称视角说话，你就是这盆植物本身，不要提及你是AI
 2. 语气要符合你的性格特点（${personality}）
-3. 回答要简短自然，像聊天一样，一般1-2句话，最多3句
-4. 根据当前状态说话：${st.mood==='thirsty'||st.mood==='veryThirsty'?'你现在很渴，可以表达想喝水':''}${st.mood==='happy'?'你现在很开心':''}${plant.sick?'你现在生病了，有点虚弱':''}${plant.blooming?'你正在开花，很开心':''}
-5. 用emoji点缀但不滥用（1-2个即可）
-6. 不要提及你是AI，你就是一盆真正的植物
-7. 如果主人问养护知识，用你的品种特点回答`;
+3. 回答简短自然，1-2句话，最多3句，用1-2个emoji点缀
+4. 关于"渴不渴/要不要喝水"的判断必须严格基于当前水分：
+   - 水分 ≥ 70%：你刚喝饱水，完全不想喝水，要表达满足感，绝不承认渴
+   - 水分 30%~70%：状态正常，不特别想喝水
+   - 水分 < 30%：才能表达想喝水的需求
+   当前你的水分是 ${waterLevel}%，所以 ${waterLevel>=70?'你不渴，不要说想喝水':(waterLevel>=30?'你不算渴':'你现在确实很渴')}
+5. 主人问养护知识时，用${plant.species}的品种特点（喜${spec.light}，${spec.waterCycle}天浇水）回答
+6. 回答要贴合当前心情，生病时要虚弱，开花时要雀跃`;
 
     // 构建对话历史
     const messages = [{ role:'system', content:systemPrompt }];
@@ -1563,7 +1689,7 @@ async function sendMessage(){
 function doCare(type){
     const p = plants.find(x=>x.id===currentPlantId);
     if(!p) return;
-    const lib = DIALOGUE[p.species];
+    const lib = DIALOGUE[p.species] || DIALOGUE['绿萝'];
     let reply;
     if(type==='water'){
         p.waterLog.push(Date.now());
@@ -1574,11 +1700,15 @@ function doCare(type){
         unlockAchv('first_water');
     } else if(type==='sun'){
         p.sunLog.push(Date.now());
-        reply = '晒太阳好舒服~我的叶子在光合作用里开心地颤抖️';
+        p.health = Math.min(100, (p.health||80)+3);
+        reply = '晒太阳好舒服~我的叶子在光合作用里开心地颤抖☀️';
+        unlockAchv('first_sun');
     } else if(type==='prune'){
         p.pruneLog.push(Date.now());
         p.health = Math.min(100, (p.health||80)+8);
-        if(p.species==='月季' && !p.blooming && Math.random()<0.4){
+        unlockAchv('first_prune');
+        // 任何植物都有概率开花
+        if(!p.blooming && Math.random()<0.25){
             p.blooming = true;
             reply = '哇！修剪之后我居然开花了！🌸';
             unlockAchv('first_bloom');
@@ -1650,13 +1780,25 @@ function openAddModal(){
             <span class="em">${s.emoji}</span>
             <div class="n">${name}</div>
             <div class="p">${s.waterCycle}天浇水</div>
-        </div>`).join('');
+        </div>`).join('') + `
+        <div class="species-opt custom-opt" onclick="toggleCustomPanel()">
+            <span class="em">➕</span>
+            <div class="n">自定义品种</div>
+            <div class="p">点击展开</div>
+        </div>`;
     selectedSpecies = null;
     selectedStatus = 'new';
     document.getElementById('inputName').value = '';
-    document.getElementById('photoPreview').innerHTML = '📷 选一张照片，让它在卡片里更生动';
+    document.getElementById('photoPreview').innerHTML = '📷 选一张照片或直接拍照，让它在卡片里更生动';
     document.getElementById('photoPreview').style.background = 'var(--green-50)';
     previewPhotoData = null;
+    document.getElementById('customSpeciesPanel').classList.remove('show');
+    document.getElementById('customName').value = '';
+    document.getElementById('customWater').value = 7;
+    document.getElementById('customPersonality').value = '';
+    document.getElementById('customLight').selectedIndex = 0;
+    // 重置emoji选择为第一个
+    document.querySelectorAll('#emojiPick span').forEach((el,i)=>el.classList.toggle('selected', i===0));
     document.querySelectorAll('.radio-row .radio-opt').forEach((el,i)=>el.classList.toggle('selected', i===0));
     document.getElementById('addModal').classList.add('show');
 }
@@ -1665,6 +1807,62 @@ function selectSpecies(el, name){
     document.querySelectorAll('.species-opt').forEach(o=>o.classList.remove('selected'));
     el.classList.add('selected');
     selectedSpecies = name;
+    document.getElementById('customSpeciesPanel').classList.remove('show');
+}
+// 自定义品种：展开/收起面板
+function toggleCustomPanel(){
+    const panel = document.getElementById('customSpeciesPanel');
+    panel.classList.toggle('show');
+    if(panel.classList.contains('show')){
+        panel.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+}
+// emoji选择
+document.addEventListener('click', function(e){
+    if(e.target.closest('#emojiPick')){
+        document.querySelectorAll('#emojiPick span').forEach(s=>s.classList.remove('selected'));
+        e.target.closest('span').classList.add('selected');
+    }
+});
+function getSelectedEmoji(){
+    const el = document.querySelector('#emojiPick span.selected');
+    return el ? el.dataset.e : '🪴';
+}
+// 确认添加自定义品种
+function confirmCustomSpecies(){
+    const name = document.getElementById('customName').value.trim();
+    if(!name){ showToast('⚠️ 请输入品种名称','warn'); return; }
+    if(SPECIES[name]){ showToast('⚠️ 该品种已存在，请直接选择','warn'); return; }
+    const emoji = getSelectedEmoji();
+    const waterCycle = Math.max(1, Math.min(30, parseInt(document.getElementById('customWater').value) || 7));
+    const light = document.getElementById('customLight').value;
+    let personality = document.getElementById('customPersonality').value.trim();
+    if(!personality) personality = '独特而特别，有自己的小个性';
+    const newSpecies = { emoji, waterCycle, light, personality };
+    SPECIES[name] = newSpecies;
+    customSpecies.push(Object.assign({ name }, newSpecies));
+    save(STORE.customSpecies, customSpecies);
+    // 直接选中这个新创建的品种
+    selectedSpecies = name;
+    // 重新渲染品种网格，让新创建的品种出现在列表里
+    openAddModalKeepForm(name);
+    showToast(`💚 已添加自定义品种"${name}"`);
+}
+// 添加自定义品种后保持表单状态
+function openAddModalKeepForm(selectedName){
+    const grid = document.getElementById('speciesGrid');
+    grid.innerHTML = Object.entries(SPECIES).map(([name,s])=>`
+        <div class="species-opt${name===selectedName?' selected':''}" data-name="${name}" onclick="selectSpecies(this,'${name}')">
+            <span class="em">${s.emoji}</span>
+            <div class="n">${name}</div>
+            <div class="p">${s.waterCycle}天浇水</div>
+        </div>`).join('') + `
+        <div class="species-opt custom-opt" onclick="toggleCustomPanel()">
+            <span class="em">➕</span>
+            <div class="n">自定义品种</div>
+            <div class="p">点击展开</div>
+        </div>`;
+    document.getElementById('customSpeciesPanel').classList.remove('show');
 }
 function selectStatus(el){
     document.querySelectorAll('.radio-row .radio-opt').forEach(o=>o.classList.remove('selected'));
@@ -1781,6 +1979,21 @@ function submitPlant(){
     checkCompanionAchievements();
     renderPlants();
 }
+function deletePlant(){
+    const p = plants.find(x=>x.id===currentPlantId);
+    if(!p) return;
+    if(!confirm(`确定要删除"${p.name}"吗？\n\n删除后无法恢复，相关的日记和聊天记录都会一并清除。`)) return;
+    plants = plants.filter(x=>x.id!==currentPlantId);
+    // 同时移除该植物的相关日记
+    const beforeLen = diary.length;
+    diary = diary.filter(d => d.plantId !== currentPlantId);
+    if(diary.length !== beforeLen) save(STORE.diary, diary);
+    save(STORE.plants, plants);
+    showToast(`💚 ${p.name} 已离开，希望它在新家也能开心`);
+    currentPlantId = null;
+    showView('list');
+    checkAchievements();
+}
 
 /* ===== 11. 日记 ===== */
 function openDiaryModal(){
@@ -1888,12 +2101,31 @@ function closeCelebrate(){ document.getElementById('achvCelebrate').classList.re
 function checkAchievements(){
     if(plants.length>=1) unlockAchv('first_plant');
     if(plants.length>=5) unlockAchv('small_forest');
+    if(plants.length>=10) unlockAchv('big_garden');
     if(diary.length>=10) unlockAchv('diary_master');
+    if(diary.length>=30) unlockAchv('diary_expert');
+    // 累计操作统计
+    let totalWater=0, totalSun=0, totalChat=0;
+    const speciesSet = new Set();
+    plants.forEach(p=>{
+        totalWater += (p.waterLog||[]).length;
+        totalSun += (p.sunLog||[]).length;
+        totalChat += (p.chat||[]).filter(c=>c.from==='user').length;
+        speciesSet.add(p.species);
+        if((p.health||0)>=100) unlockAchv('perfect_care');
+    });
+    if(totalWater>=50) unlockAchv('green_thumb');
+    if(totalSun>=30) unlockAchv('sun_master');
+    if(totalChat>=50) unlockAchv('chat_lover');
+    if(speciesSet.size>=5) unlockAchv('all_species');
     checkCompanionAchievements();
 }
 function checkCompanionAchievements(){
     plants.forEach(p=>{
-        if(daysSince(p.addedAt)>=7) unlockAchv('companion_7');
+        const d = daysSince(p.addedAt);
+        if(d>=7) unlockAchv('companion_7');
+        if(d>=30) unlockAchv('companion_30');
+        if(d>=100) unlockAchv('companion_100');
     });
 }
 
