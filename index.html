@@ -1995,14 +1995,31 @@ function getSelectedEmoji(){
     const el = document.querySelector('#emojiPick span.selected');
     return el ? el.dataset.e : '🪴';
 }
-// 确认添加自定义品种
+// 确认添加自定义品种——无论输入什么，都自动兜底通过
 function confirmCustomSpecies(){
-    const name = document.getElementById('customName').value.trim();
-    if(!name){ showToast('⚠️ 请输入品种名称','warn'); return; }
-    if(SPECIES[name]){ showToast('⚠️ 该品种已存在，请直接选择','warn'); return; }
-    const emoji = getSelectedEmoji();
-    const waterCycle = Math.max(1, Math.min(30, parseInt(document.getElementById('customWater').value) || 7));
-    const light = document.getElementById('customLight').value;
+    let name = document.getElementById('customName').value.trim();
+    // 名字为空：自动给一个默认名
+    if(!name){
+        name = '我的植物' + (Object.keys(SPECIES).length + 1);
+        document.getElementById('customName').value = name;
+    }
+    // 名字已存在：直接选中已有的，不再阻拦
+    if(SPECIES[name]){
+        selectedSpecies = name;
+        openAddModalKeepForm(name);
+        showToast(`💚 已选中品种"${name}"`);
+        return;
+    }
+    // emoji 没选也兜底为 🪴
+    const emoji = getSelectedEmoji() || '🪴';
+    // 浇水周期校验：非数字/空都兜底为 7
+    const waterRaw = document.getElementById('customWater').value;
+    let waterCycle = parseInt(waterRaw);
+    if(!waterCycle || isNaN(waterCycle)) waterCycle = 7;
+    waterCycle = Math.max(1, Math.min(30, waterCycle));
+    // 光照兜底
+    const light = document.getElementById('customLight').value || '散射光';
+    // 性格兜底
     let personality = document.getElementById('customPersonality').value.trim();
     if(!personality) personality = '独特而特别，有自己的小个性';
     const newSpecies = { emoji, waterCycle, light, personality };
