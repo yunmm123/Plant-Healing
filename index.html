@@ -629,6 +629,19 @@ a{color:inherit;text-decoration:none}
 }
 .emoji-pick span:hover{border-color:var(--green-300);transform:scale(1.08)}
 .emoji-pick span.selected{border-color:var(--green-500);background:var(--green-50);box-shadow:0 0 0 2px rgba(34,197,94,.15)}
+/* 提醒场景列表 */
+.scene-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem;margin-top:.5rem}
+.scene-item{
+  display:flex;align-items:center;gap:.7rem;padding:.8rem .9rem;
+  border:1.5px solid var(--green-100);border-radius:var(--r-sm);background:#fff;
+  cursor:pointer;transition:all .25s var(--ease);
+}
+.scene-item:hover{border-color:var(--green-300);transform:translateY(-1px);box-shadow:var(--shadow-xs)}
+.scene-item input{margin:0;cursor:pointer;accent-color:var(--green-600);flex-shrink:0;width:16px;height:16px}
+.scene-item .scene-ic{font-size:1.4rem;flex-shrink:0}
+.scene-item .t{font-size:.86rem;font-weight:800;color:var(--green-900);line-height:1.3}
+.scene-item .d{font-size:.72rem;color:var(--stone-400);margin-top:.1rem;line-height:1.3}
+.scene-item:has(input:checked){border-color:var(--green-500);background:var(--green-50)}
 .photo-preview{
   margin-top:.6rem;width:100%;height:140px;border-radius:var(--r-md);
   border:2px dashed var(--green-200);background:var(--green-50);
@@ -961,32 +974,54 @@ a{color:inherit;text-decoration:none}
         <div>
           <div class="detail-hero" id="detailHero"></div>
           <div class="card" style="padding:1.6rem;margin-top:1.6rem" id="reminderCard">
-            <h4 style="font-family:var(--font-display);color:var(--green-900);font-size:1.1rem;margin-bottom:1rem;font-weight:800">🔔 提醒设置</h4>
+            <h4 style="font-family:var(--font-display);color:var(--green-900);font-size:1.1rem;margin-bottom:1rem;font-weight:800">💚 陪伴设置</h4>
             <div class="reminder-tabs">
-              <button class="active" data-tab="email" onclick="switchReminderTab('email')"> 邮件</button>
-              <button data-tab="push" onclick="switchReminderTab('push')">🔔 推送</button>
+              <button class="active" data-tab="email" onclick="switchReminderTab('email')">💌 邮件</button>
+              <button data-tab="push" onclick="switchReminderTab('push')">💬 主动陪伴</button>
               <button data-tab="ai" onclick="switchReminderTab('ai')">🤖 AI</button>
             </div>
             <div class="reminder-panel active" id="tab-email">
               <label class="switch" style="margin-bottom:1.1rem">
                 <input type="checkbox" id="emailSwitch" onchange="toggleEmailReminder()">
                 <span class="track"></span>
-                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">开启浇水邮件提醒</span>
+                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">开启邮件陪伴（不只是浇水，植物会主动写信给你）</span>
               </label>
               <div class="field">
                 <label>接收提醒的邮箱</label>
                 <input type="email" id="emailInput" placeholder="you@example.com" onchange="saveEmail()">
               </div>
               <div class="field">
-                <label>提醒频率（天）</label>
-                <input type="number" id="reminderDays" min="1" max="30" onchange="saveReminderDays()">
+                <label>💌 想在哪些时刻收到植物的来信？（可多选）</label>
+                <div class="scene-list">
+                  <label class="scene-item"><input type="checkbox" id="sceneThirsty" onchange="saveReminderScenes()"><span class="scene-ic">💧</span><div><div class="t">渴了想喝水</div><div class="d">超过浇水周期未浇水</div></div></label>
+                  <label class="scene-item"><input type="checkbox" id="sceneCompanion" onchange="saveReminderScenes()"><span class="scene-ic">💬</span><div><div class="t">日常陪伴问候</div><div class="d">每隔几天主动跟你聊聊天</div></div></label>
+                  <label class="scene-item"><input type="checkbox" id="sceneBloom" onchange="saveReminderScenes()"><span class="scene-ic">🌸</span><div><div class="t">开花啦</div><div class="d">见证它的特别时刻</div></div></label>
+                  <label class="scene-item"><input type="checkbox" id="sceneSick" onchange="saveReminderScenes()"><span class="scene-ic">🥺</span><div><div class="t">生病求救</div><div class="d">状态不好时主动求关注</div></div></label>
+                  <label class="scene-item"><input type="checkbox" id="sceneWeather" onchange="saveReminderScenes()"><span class="scene-ic">☀️</span><div><div class="t">天气关怀</div><div class="d">高温/降温时贴心提醒</div></div></label>
+                  <label class="scene-item"><input type="checkbox" id="sceneFestival" onchange="saveReminderScenes()"><span class="scene-ic">🎉</span><div><div class="t">节日祝福</div><div class="d">重要节日送来祝福</div></div></label>
+                  <label class="scene-item"><input type="checkbox" id="sceneAnniversary" onchange="saveReminderScenes()"><span class="scene-ic">🎂</span><div><div class="t">陪伴周年</div><div class="d">相识满月/百天的纪念日</div></div></label>
+                </div>
               </div>
-              <button class="btn btn-ghost" onclick="sendTestEmail()" style="width:100%;justify-content:center"> 发送测试邮件</button>
+              <div class="field">
+                <label>陪伴问候频率（天）</label>
+                <input type="number" id="reminderDays" min="1" max="30" onchange="saveReminderDays()">
+                <p style="font-size:.78rem;color:var(--stone-400);margin-top:.4rem;line-height:1.5">每隔几天，植物会主动写一封"近况信"告诉你它最近怎么样。</p>
+              </div>
+              <button class="btn btn-ghost" onclick="sendTestEmail()" style="width:100%;justify-content:center">📬 发送测试邮件</button>
             </div>
             <div class="reminder-panel" id="tab-push">
-              <p style="font-size:.9rem;color:var(--stone-500);margin-bottom:1rem;line-height:1.6">开启后，当植物需要浇水时浏览器会弹出系统通知（需授权）。</p>
-              <button class="btn btn-primary" onclick="enablePush()" style="width:100%;justify-content:center">🔔 开启浏览器推送</button>
-              <div id="pushStatus" style="margin-top:.7rem;font-size:.82rem;color:var(--stone-400)"></div>
+              <label class="switch" style="margin-bottom:1.1rem">
+                <input type="checkbox" id="proactiveSwitch" onchange="toggleProactiveChat()">
+                <span class="track"></span>
+                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">开启植物主动聊天（陪伴核心）</span>
+              </label>
+              <p style="font-size:.85rem;color:var(--stone-500);margin-bottom:1rem;line-height:1.6">开启后，植物会在你打开应用时主动找你说话——早安/午安/晚安问候、想你、生病求救、开花分享、好久不见想念，让陪伴真的发生。每盆植物每天最多主动发1次。</p>
+              <p style="font-size:.82rem;color:var(--stone-400);margin-bottom:1rem;line-height:1.5">💡 这是植愈的初心功能：植物不只是被动等你来浇水，它会主动表达情绪、找你聊天，让你真正感受到被一盆小生命惦记着。</p>
+              <div style="border-top:1px dashed var(--green-100);padding-top:1rem;margin-top:.5rem">
+                <p style="font-size:.9rem;color:var(--stone-500);margin-bottom:.8rem;line-height:1.6">🔔 还想收到浏览器系统通知？</p>
+                <button class="btn btn-primary" onclick="enablePush()" style="width:100%;justify-content:center">🔔 开启浏览器推送</button>
+                <div id="pushStatus" style="margin-top:.7rem;font-size:.82rem;color:var(--stone-400)"></div>
+              </div>
             </div>
             <div class="reminder-panel" id="tab-ai">
               <label class="switch" style="margin-bottom:1.1rem">
@@ -1354,7 +1389,7 @@ const STORE = {
     customSpecies: 'zhiyu_custom_species'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 版本校验：版本不一致则清除所有旧数据（换版本/换设备场景）
@@ -1374,11 +1409,16 @@ let unlockedAchv = load(STORE.achv, []);
 let customSpecies = load(STORE.customSpecies, []);
 customSpecies.forEach((s, i) => { if(!SPECIES[s.name]) SPECIES[s.name] = s; });
 const DEFAULT_AI_KEY = '6c79eb5b51884d4a9661de32564482db.92iWMe9g8yak4GoY';
-let settings = load(STORE.settings, { emailReminder:false, email:'', reminderDays:0, pushEnabled:false, aiApiKey:DEFAULT_AI_KEY, aiEnabled:true });
-// 老用户迁移：如果之前没设置过AI相关字段，默认开启AI并填入Key
+// 提醒场景默认值：所有陪伴场景默认开启
+const DEFAULT_SCENES = { thirsty:true, companion:true, bloom:true, sick:true, weather:true, festival:true, anniversary:true };
+let settings = load(STORE.settings, { emailReminder:false, email:'', reminderDays:3, pushEnabled:false, aiApiKey:DEFAULT_AI_KEY, aiEnabled:true, reminderScenes:{...DEFAULT_SCENES}, proactiveChat:true });
+// 老用户迁移：补齐缺失字段
 if(settings.aiApiKey === undefined){ settings.aiApiKey = DEFAULT_AI_KEY; }
 if(settings.aiEnabled === undefined){ settings.aiEnabled = true; }
 if(!settings.aiApiKey){ settings.aiApiKey = DEFAULT_AI_KEY; settings.aiEnabled = true; }
+if(!settings.reminderScenes){ settings.reminderScenes = {...DEFAULT_SCENES}; }
+if(settings.proactiveChat === undefined){ settings.proactiveChat = true; }
+if(!settings.reminderDays){ settings.reminderDays = 3; }
 let currentPlantId = null;
 let selectedSpecies = null;
 let selectedStatus = 'new';
@@ -2174,6 +2214,34 @@ function loadReminderUI(){
     document.getElementById('reminderDays').value = settings.reminderDays || spec.waterCycle;
     document.getElementById('aiSwitch').checked = settings.aiEnabled;
     document.getElementById('aiKeyInput').value = settings.aiApiKey || '';
+    // 加载场景勾选状态
+    const s = settings.reminderScenes || {};
+    ['Thirsty','Companion','Bloom','Sick','Weather','Festival','Anniversary'].forEach(k=>{
+        const el = document.getElementById('scene'+k);
+        if(el) el.checked = !!s[k.toLowerCase()];
+    });
+    // 主动聊天开关
+    const proactiveEl = document.getElementById('proactiveSwitch');
+    if(proactiveEl) proactiveEl.checked = settings.proactiveChat !== false;
+}
+function toggleProactiveChat(){
+    settings.proactiveChat = document.getElementById('proactiveSwitch').checked;
+    save(STORE.settings, settings);
+    showToast(settings.proactiveChat ? '💚 已开启植物主动聊天，它会主动找你说话' : '已关闭植物主动聊天');
+    if(settings.proactiveChat) checkProactiveChat();
+}
+function saveReminderScenes(){
+    settings.reminderScenes = {
+        thirsty: document.getElementById('sceneThirsty').checked,
+        companion: document.getElementById('sceneCompanion').checked,
+        bloom: document.getElementById('sceneBloom').checked,
+        sick: document.getElementById('sceneSick').checked,
+        weather: document.getElementById('sceneWeather').checked,
+        festival: document.getElementById('sceneFestival').checked,
+        anniversary: document.getElementById('sceneAnniversary').checked
+    };
+    save(STORE.settings, settings);
+    showToast('💌 陪伴场景已保存');
 }
 function switchReminderTab(tab){
     document.querySelectorAll('.reminder-tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
@@ -2264,21 +2332,260 @@ function enablePush(){
     });
 }
 
-/* ===== 16. 定时检测：需要浇水的植物 ===== */
-function checkWateringReminders(){
+/* ===== 16. 多场景陪伴提醒系统 =====
+   不只是缺水才发邮件——
+   浇水 / 日常问候 / 开花 / 生病 / 天气 / 节日 / 周年纪念 都会主动联系用户
+*/
+const FESTIVALS = [
+    { md:'01-01', name:'元旦', msg:'新年快乐！新的一年也要一起好好长大呀~' },
+    { md:'02-14', name:'情人节', msg:'今天情人节，虽然我不会送花（我自己就是花），但想说：谢谢你一直陪我~' },
+    { md:'03-12', name:'植树节', msg:'植树节快乐！今天也是属于我们植物的节日呢🌿' },
+    { md:'05-01', name:'劳动节', msg:'劳动节快乐！你休息休息，光合作用的事就交给我吧☀️' },
+    { md:'06-01', name:'儿童节', msg:'六一儿童节！今天我们都是小朋友，要不要给我浇点水当礼物？' },
+    { md:'10-01', name:'国庆节', msg:'国庆快乐！七天的假期，记得抽空来看看我呀~' },
+    { md:'12-25', name:'圣诞节', msg:'圣诞快乐🎄！今天的我比圣诞树还绿呢~' },
+    { md:'12-31', name:'除夕', msg:'除夕快乐！过去一年谢谢你照顾，新的一年继续一起走吧~' }
+];
+function getTodayMd(){ const d=new Date(); return (d.getMonth()+1<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
+function daysSinceTs(ts){ return Math.floor((Date.now()-ts)/86400000); }
+function hoursSinceTs(ts){ return Math.floor((Date.now()-ts)/3600000); }
+
+function checkCompanionReminders(){
     if(!settings.emailReminder || !settings.email) return;
     const sent = load(STORE.emailSent, {});
     const today = new Date().toDateString();
+    const scenes = settings.reminderScenes || {};
+    const temp = getSimTemp();
+    const todayMd = getTodayMd();
+
     plants.forEach(p=>{
         const st = getPlantState(p);
-        if(st.mood==='thirsty' || st.mood==='veryThirsty'){
-            if(sent[p.id] === today) return;
-            const msg = `主人~我是${p.name}，我已经${st.days}天没喝水啦，今天${getSimTemp()}°C，能给我浇点水吗？🌱`;
-            sendEmail(settings.email, `🌱 ${p.name}想喝水啦~`, p.name, msg);
-            sent[p.id] = today;
+        const companionDays = daysSince(p.addedAt) + 1;
+        const sentKey = p.id + '_' + today;
+
+        // 1) 浇水提醒
+        if(scenes.thirsty && (st.mood==='thirsty' || st.mood==='veryThirsty')){
+            if(sent[sentKey+'_water'] !== today){
+                const msg = `主人~我是${p.name}，已经${st.days}天没喝水啦，今天${temp}°C${temp>=30?'热得我叶子都蔫了':'，能给我浇点水吗？'}🌱`;
+                sendEmail(settings.email, `🌱 ${p.name}想喝水啦~`, p.name, msg);
+                sent[sentKey+'_water'] = today;
+            }
+        }
+
+        // 2) 日常陪伴问候（按用户设置的频率，每隔几天主动来信）
+        if(scenes.companion){
+            const interval = Math.max(1, settings.reminderDays || 3);
+            const lastCompanionSent = sent[p.id+'_companion_ts'] || 0;
+            if(daysSinceTs(lastCompanionSent) >= interval && sent[sentKey+'_companion'] !== today){
+                const moodText = plantMoodLine(p, st);
+                const msg = `主人~我是${p.name}，已经陪伴你 ${companionDays} 天啦💚\n\n最近我的状态：${st.moodText}，水分 ${st.waterPct}%，健康值 ${st.health}。\n\n${moodText}\n\n今天${temp}°C，记得照顾好自己，多喝水，我也会好好的~🌿`;
+                sendEmail(settings.email, `💌 ${p.name}给你写了一封信`, p.name, msg);
+                sent[sentKey+'_companion'] = today;
+                sent[p.id+'_companion_ts'] = Date.now();
+            }
+        }
+
+        // 3) 开花通知
+        if(scenes.bloom && p.blooming){
+            if(sent[p.id+'_bloom'] !== true){
+                const msg = `主人主人！我是${p.name}，我开花啦！！！🌸✨\n\n等了好久好久，今天终于开了第一朵花！想第一时间告诉你~谢谢你一直照顾我，不然我不会开得这么美！\n\n快来详情页看看我~`;
+                sendEmail(settings.email, `🌸 ${p.name}开花啦！`, p.name, msg);
+                sent[p.id+'_bloom'] = true;
+            }
+        } else if(!p.blooming && sent[p.id+'_bloom'] === true){
+            // 花谢了，重置标记以便下次再开还能通知
+            sent[p.id+'_bloom'] = false;
+        }
+
+        // 4) 生病求救
+        if(scenes.sick && p.sick){
+            if(sent[sentKey+'_sick'] !== today){
+                const msg = `主人...我是${p.name}，我今天感觉有点不舒服🥺\n\n健康值掉到了 ${st.health}，可能是太渴或者光照不够。你能来看看我吗？\n\n来详情页给我浇浇水、晒晒太阳好不好~`;
+                sendEmail(settings.email, `🥺 ${p.name}不太舒服`, p.name, msg);
+                sent[sentKey+'_sick'] = today;
+            }
+        }
+
+        // 5) 天气关怀（高温/低温）
+        if(scenes.weather){
+            if(temp >= 35 && sent[sentKey+'_hot'] !== today){
+                const msg = `主人~我是${p.name}，今天${temp}°C好热啊🔥\n\n这种天气我水分蒸发得特别快，记得多给我浇点水~也别忘了照顾好自己，多喝水防中暑！`;
+                sendEmail(settings.email, `☀️ ${p.name}提醒你今天好热`, p.name, msg);
+                sent[sentKey+'_hot'] = today;
+            } else if(temp <= 10 && sent[sentKey+'_cold'] !== today){
+                const msg = `主人~我是${p.name}，今天${temp}°C有点冷❄️\n\n能不能把我挪到温暖一点的地方？我也会努力撑过去的~你也记得加衣服哦！`;
+                sendEmail(settings.email, `❄️ ${p.name}提醒你今天降温了`, p.name, msg);
+                sent[sentKey+'_cold'] = today;
+            }
+        }
+
+        // 6) 陪伴周年（满月/百天/周年）
+        if(scenes.anniversary){
+            const milestones = [30, 100, 365];
+            const milestone = milestones.find(m => m === companionDays);
+            if(milestone && sent[p.id+'_milestone_'+milestone] !== true){
+                const label = milestone===30?'满月':(milestone===100?'百天':'一周年');
+                const msg = `主人！我是${p.name}，今天是我们${label}的日子！🎂\n\n从你把我带回家的那天起，已经过去 ${milestone} 天了。谢谢你一直以来的陪伴和照顾~\n\n希望接下来的日子，我们还能一起走下去。${SPECIES[p.species].emoji}`;
+                sendEmail(settings.email, `🎂 ${p.name}和你${label}啦`, p.name, msg);
+                sent[p.id+'_milestone_'+milestone] = true;
+            }
         }
     });
+
+    // 7) 节日祝福（每盆植物都发，但每天每盆最多一封）
+    if(scenes.festival){
+        const f = FESTIVALS.find(f => f.md === todayMd);
+        if(f && sent['festival_'+todayMd] !== today){
+            plants.slice(0, 3).forEach((p, i) => {
+                const msg = `主人~${f.name}快乐！我是${p.name}🎉\n\n${f.msg}\n\n—— 你的${p.species} ${p.name}`;
+                sendEmail(settings.email, `🎉 ${f.name}快乐·${p.name}送来祝福`, p.name, msg);
+            });
+            sent['festival_'+todayMd] = today;
+        }
+    }
+
     save(STORE.emailSent, sent);
+}
+
+// 植物的近况描述（用于陪伴信）
+function plantMoodLine(p, st){
+    if(p.sick) return '最近有点不舒服，叶子有点蔫蔫的，希望你能多陪陪我。';
+    if(p.blooming) return '我开花啦！每天都特别开心，想让你也看到~';
+    if(st.mood==='veryThirsty') return '其实我有点渴了，但还能撑一撑，等你方便的时候记得给我浇水呀。';
+    if(st.mood==='thirsty') return '我有点想喝水了，不过今天阳光好好，心情还不错~';
+    if(st.waterPct >= 70) return '今天水分充足，叶子绿油油的，特别有精神！';
+    return '最近过得挺好的，安安静静地晒着太阳，等你来看看我。';
+}
+
+// 兼容旧调用
+function checkWateringReminders(){ checkCompanionReminders(); }
+
+/* ===== 16.1 主动聊天：植物在用户打开应用时主动发消息 =====
+   陪伴的核心——植物不只是被动等待，而是主动找你说话
+*/
+const PROACTIVE_TEMPLATES = {
+    morning: [
+        '主人早上好呀~今天也要元气满满哦☀️',
+        '早安~我偷偷看了一眼阳光，今天会很不错~',
+        '主人醒啦？我等你很久啦，今天的阳光超暖和~',
+        '早上好呀！记得吃早餐，我也要好好晒太阳啦🌿'
+    ],
+    noon: [
+        '主人中午啦，记得吃饭别饿着~',
+        '午饭后我晒太阳晒得最舒服~你休息一下嘛',
+        '主人~今天的太阳好暖，我都在打瞌睡了😴',
+        '中午好呀！吃午饭了吗？记得照顾好自己哦💚'
+    ],
+    afternoon: [
+        '下午好~工作累了的话，抬头看看我呀🌿',
+        '主人主人~我偷偷长了一点点，你能看出来吗？',
+        '下午茶时间到~要不要来找我聊聊天？',
+        '主人加油~我会一直在阳台（或者窗台）陪着你的✨'
+    ],
+    evening: [
+        '主人晚上好~今天过得怎么样呀？',
+        '晚饭后想不想来陪我聊聊？我等你哦🌙',
+        '晚风好舒服~今天的我开开心心，希望你也是',
+        '主人回来啦~我等了你一下午啦💚'
+    ],
+    night: [
+        '该睡觉啦主人~熬夜对身体不好哦，我先睡了你也早点休息🌙',
+        '夜深了~做个好梦，明天我等你来看我',
+        '晚安主人~今天谢谢你来看我，梦里见😴',
+        '嘘...我已经困了，你也早点睡吧，晚安~'
+    ],
+    veryThirsty: [
+        '主人...我有点渴了🥺，能给我浇点水吗？',
+        '我今天感觉叶子有点蔫...是不是该喝水了呀？',
+        '主人~偷偷告诉你，我已经想喝水好久了...'
+    ],
+    blooming: [
+        '主人主人！你看我！今天开花啦🌸！快来看快来看！',
+        '我居然开花了！！太开心了，第一个就想告诉你✨',
+        '今天的我特别美~因为开花了啦，快来看看我🌸'
+    ],
+    sick: [
+        '主人...我今天不太舒服，叶子有点黄了🥺',
+        '感觉有点虚弱...你能多陪陪我吗？',
+        '生病了有点想哭...主人快来救救我呀'
+    ],
+    longNoSee: [
+        '主人~好几天没来看我了，我有点想你了🥺',
+        '你去哪儿啦？我每天都在等你哦~',
+        '主人是不是把我忘了...（开玩笑的，但还是想你了）',
+        '终于等到你来啦！我攒了好多话想跟你说💚'
+    ],
+    companion: [
+        '今天又过去啦~陪你一天我都很开心🌿',
+        '主人~偷偷说一句，有你的陪伴真好',
+        '今天的我状态很好，谢谢你一直照顾我呀💚',
+        '我悄悄长了一点点，你看不看得出来？嘿嘿'
+    ]
+};
+
+function getTimeOfDay(){
+    const h = new Date().getHours();
+    if(h < 6) return 'night';
+    if(h < 11) return 'morning';
+    if(h < 13) return 'noon';
+    if(h < 18) return 'afternoon';
+    if(h < 22) return 'evening';
+    return 'night';
+}
+function pickProactiveTemplate(category){
+    const arr = PROACTIVE_TEMPLATES[category] || PROACTIVE_TEMPLATES.companion;
+    return arr[Math.floor(Math.random()*arr.length)];
+}
+
+// 应用打开时，每盆植物按需主动发消息（每天最多主动发1次，且距上次聊天超过6小时）
+function checkProactiveChat(){
+    if(!settings.proactiveChat) return;
+    const now = Date.now();
+    const today = new Date().toDateString();
+    const tod = getTimeOfDay();
+    const sent = load(STORE.emailSent, {}); // 复用此存储记录主动聊天
+    let needSave = false;
+
+    plants.forEach(p=>{
+        if(!p.chat) p.chat = [];
+        const lastChatTs = p.chat.length ? p.chat[p.chat.length-1].ts : 0;
+        const hoursSinceChat = (now - lastChatTs) / 3600000;
+        const proactiveSentToday = sent[p.id+'_proactive_'+today];
+
+        // 触发条件：距上次聊天 ≥ 6 小时 且 今天还没主动发过
+        if(hoursSinceChat < 6 || proactiveSentToday) return;
+
+        // 按优先级选择主动消息类型
+        let category = tod; // 默认按时段问候
+        if(p.sick) category = 'sick';
+        else if(p.blooming) category = 'blooming';
+        else {
+            const st = getPlantState(p);
+            if(st.mood==='veryThirsty') category = 'veryThirsty';
+            else if(hoursSinceChat >= 72) category = 'longNoSee';
+            else if(Math.random() < 0.4) category = 'companion';
+        }
+
+        const text = pickProactiveTemplate(category);
+        p.chat.push({ from:'plant', text, ts: now, proactive:true });
+        p.lastLine = text;
+        sent[p.id+'_proactive_'+today] = true;
+        needSave = true;
+    });
+
+    if(needSave){
+        save(STORE.plants, plants);
+        save(STORE.emailSent, sent);
+        // 如果当前在详情页，刷新聊天
+        if(currentPlantId && document.getElementById('view-detail').classList.contains('active')){
+            const p = plants.find(x=>x.id===currentPlantId);
+            if(p) renderChat();
+        }
+        // 列表页也更新植物卡片的小气泡
+        if(document.getElementById('view-list').classList.contains('active')){
+            renderPlants();
+        }
+    }
 }
 
 /* ===== 17. Toast ===== */
@@ -2363,7 +2670,15 @@ function init(){
     renderDiary();
     renderAchievements();
     checkAchievements();
-    setTimeout(checkWateringReminders, 2500);
+    setTimeout(()=>{
+        checkCompanionReminders();  // 多场景邮件陪伴
+        checkProactiveChat();        // 植物主动聊天
+    }, 2500);
+    // 每30分钟检测一次主动陪伴（用户长时间停留时也能收到新问候）
+    setInterval(()=>{
+        checkCompanionReminders();
+        checkProactiveChat();
+    }, 30*60*1000);
     initEmailJS();
 }
 document.addEventListener('DOMContentLoaded', init);
