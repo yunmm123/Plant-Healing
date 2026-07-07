@@ -1008,6 +1008,18 @@ a{color:inherit;text-decoration:none}
                 <p style="font-size:.78rem;color:var(--stone-400);margin-top:.4rem;line-height:1.5">每隔几天，植物会主动写一封"近况信"告诉你它最近怎么样。</p>
               </div>
               <button class="btn btn-ghost" onclick="sendTestEmail()" style="width:100%;justify-content:center">📬 发送测试邮件</button>
+              <div style="margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--green-100)">
+                <label style="font-size:.85rem;color:var(--stone-600);font-weight:700;display:block;margin-bottom:.5rem">🧪 评委测试：立即预览各场景邮件</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                  <button class="btn btn-ghost" onclick="testEmailScene('companion')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">💌 陪伴问候</button>
+                  <button class="btn btn-ghost" onclick="testEmailScene('bloom')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🌸 开花</button>
+                  <button class="btn btn-ghost" onclick="testEmailScene('sick')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🥺 生病</button>
+                  <button class="btn btn-ghost" onclick="testEmailScene('weather')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">☀️ 天气</button>
+                  <button class="btn btn-ghost" onclick="testEmailScene('festival')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🎉 节日</button>
+                  <button class="btn btn-ghost" onclick="testEmailScene('anniversary')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🎂 周年</button>
+                </div>
+                <p style="font-size:.75rem;color:var(--stone-400);margin-top:.5rem;line-height:1.5">点击即触发该场景的邮件发送到你的邮箱，立即看到陪伴效果。</p>
+              </div>
             </div>
             <div class="reminder-panel" id="tab-push">
               <label class="switch" style="margin-bottom:1.1rem">
@@ -1017,9 +1029,25 @@ a{color:inherit;text-decoration:none}
               </label>
               <p style="font-size:.85rem;color:var(--stone-500);margin-bottom:1rem;line-height:1.6">开启后，植物会在你打开应用时主动找你说话——早安/午安/晚安问候、想你、生病求救、开花分享、好久不见想念，让陪伴真的发生。每盆植物每天最多主动发1次。</p>
               <p style="font-size:.82rem;color:var(--stone-400);margin-bottom:1rem;line-height:1.5">💡 这是植愈的初心功能：植物不只是被动等你来浇水，它会主动表达情绪、找你聊天，让你真正感受到被一盆小生命惦记着。</p>
-              <div style="border-top:1px dashed var(--green-100);padding-top:1rem;margin-top:.5rem">
+
+              <div class="field">
+                <label>🧪 体验测试（评委专用）</label>
+                <p style="font-size:.8rem;color:var(--stone-500);margin-bottom:.8rem;line-height:1.6">主动聊天原本需要等6小时才会触发，这里提供即时测试，让你立即看到陪伴效果：</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                  <button class="btn btn-ghost" onclick="testProactiveChat('time')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">🌅 按时段问候</button>
+                  <button class="btn btn-ghost" onclick="testProactiveChat('companion')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">💚 日常陪伴</button>
+                  <button class="btn btn-ghost" onclick="testProactiveChat('veryThirsty')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">🥺 渴了撒娇</button>
+                  <button class="btn btn-ghost" onclick="testProactiveChat('blooming')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">🌸 开花分享</button>
+                  <button class="btn btn-ghost" onclick="testProactiveChat('sick')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">🏥 生病求救</button>
+                  <button class="btn btn-ghost" onclick="testProactiveChat('longNoSee')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">想念你</button>
+                </div>
+                <button class="btn btn-primary" onclick="testProactiveChat('all')" style="width:100%;justify-content:center;margin-top:.6rem">✨ 随机来一次主动陪伴</button>
+                <p style="font-size:.75rem;color:var(--stone-400);margin-top:.6rem;line-height:1.5">点击后植物会立即在聊天框里发消息，你可以马上体验陪伴效果，无需等待。</p>
+              </div>
+
+              <div style="border-top:1px dashed var(--green-100);padding-top:1rem;margin-top:1rem">
                 <p style="font-size:.9rem;color:var(--stone-500);margin-bottom:.8rem;line-height:1.6">🔔 还想收到浏览器系统通知？</p>
-                <button class="btn btn-primary" onclick="enablePush()" style="width:100%;justify-content:center">🔔 开启浏览器推送</button>
+                <button class="btn btn-ghost" onclick="enablePush()" style="width:100%;justify-content:center">🔔 开启浏览器推送</button>
                 <div id="pushStatus" style="margin-top:.7rem;font-size:.82rem;color:var(--stone-400)"></div>
               </div>
             </div>
@@ -1145,7 +1173,13 @@ a{color:inherit;text-decoration:none}
       <label>它现在的状态</label>
       <div class="radio-row">
         <div class="radio-opt selected" data-status="new" onclick="selectStatus(this)">🆕 刚买回来</div>
-        <div class="radio-opt" data-status="old" onclick="selectStatus(this)"> 已经养了一阵</div>
+        <div class="radio-opt" data-status="old" onclick="selectStatus(this)">📅 已经养了一阵</div>
+      </div>
+      <div class="custom-days-row" id="customDaysRow" style="display:none">
+        <label style="font-size:.85rem;color:var(--stone-600);font-weight:700">已养多少天？
+          <input type="number" id="customDays" min="1" max="365" value="7" style="width:80px;margin-left:.5rem;padding:.4rem .6rem;border:1.5px solid var(--green-100);border-radius:8px">
+          <span style="font-size:.78rem;color:var(--stone-400)">天（影响陪伴天数与初始水分）</span>
+        </label>
       </div>
     </div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.8rem" onclick="submitPlant()">💚 开始养护</button>
@@ -1389,7 +1423,7 @@ const STORE = {
     customSpecies: 'zhiyu_custom_species'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.3.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 版本校验：版本不一致则清除所有旧数据（换版本/换设备场景）
@@ -1840,6 +1874,9 @@ function openAddModal(){
     // 重置emoji选择为第一个
     document.querySelectorAll('#emojiPick span').forEach((el,i)=>el.classList.toggle('selected', i===0));
     document.querySelectorAll('.radio-row .radio-opt').forEach((el,i)=>el.classList.toggle('selected', i===0));
+    // 重置自定义天数
+    document.getElementById('customDaysRow').style.display = 'none';
+    document.getElementById('customDays').value = 7;
     document.getElementById('addModal').classList.add('show');
 }
 function closeAddModal(){ document.getElementById('addModal').classList.remove('show'); }
@@ -1908,6 +1945,9 @@ function selectStatus(el){
     document.querySelectorAll('.radio-row .radio-opt').forEach(o=>o.classList.remove('selected'));
     el.classList.add('selected');
     selectedStatus = el.dataset.status;
+    // "已经养了一阵"时显示自定义天数输入框
+    const customRow = document.getElementById('customDaysRow');
+    if(customRow) customRow.style.display = (selectedStatus === 'old') ? 'block' : 'none';
 }
 function previewPhoto(e){
     const file = e.target.files[0];
@@ -1994,13 +2034,22 @@ function submitPlant(){
     if(!selectedSpecies){ showToast('⚠️ 请选择品种','warn'); return; }
     const now = Date.now();
     const isOld = selectedStatus === 'old';
+    // 自定义已养天数（默认7天，最小1天，最大365天）
+    let customDays = 7;
+    if(isOld){
+        customDays = parseInt(document.getElementById('customDays').value) || 7;
+        customDays = Math.max(1, Math.min(365, customDays));
+    }
+    const dayMs = 86400000;
+    // 已养N天的话：最后一次浇水 = 现在 - (N-1) 天（即昨天或今天浇过水，水分合理）
+    const lastWaterTs = isOld ? now - Math.min(customDays - 1, 3) * dayMs : now;
     const plant = {
         id: 'p'+now+Math.floor(Math.random()*1000),
         name,
         species: selectedSpecies,
         photo: previewPhotoData,
-        addedAt: isOld ? now - 7*86400000 : now,
-        waterLog: isOld ? [now - 3*86400000] : [now],
+        addedAt: isOld ? now - customDays * dayMs : now,
+        waterLog: [lastWaterTs],
         sunLog: [],
         pruneLog: [],
         chat: [],
@@ -2320,6 +2369,49 @@ async function sendTestEmail(){
     showToast('📨 正在发送...');
     await sendEmail(email, ` ${name} 给你发来一封测试信`, name, `主人你好~我是${name}，这是来自植愈的测试邮件。如果你收到了，说明邮件提醒已经成功配置好啦！以后我渴了就会写信告诉你~🌿`);
 }
+
+// 评委测试：立即触发指定场景的邮件（绕过频率限制）
+async function testEmailScene(scene){
+    const email = document.getElementById('emailInput').value.trim() || settings.email;
+    if(!email){ showToast('⚠️ 请先填邮箱','warn'); return; }
+    const p = plants.find(x=>x.id===currentPlantId) || plants[0];
+    if(!p){ showToast('⚠️ 请先添加一盆植物','warn'); return; }
+    const st = getPlantState(p);
+    const temp = getSimTemp();
+    const companionDays = daysSince(p.addedAt) + 1;
+    let subject, msg;
+    switch(scene){
+        case 'companion':
+            subject = `💌 ${p.name}给你写了一封信`;
+            msg = `主人~我是${p.name}，已经陪伴你 ${companionDays} 天啦💚\n\n最近我的状态：${st.moodText}，水分 ${st.waterPct}%，健康值 ${st.health}。\n\n${plantMoodLine(p, st)}\n\n今天${temp}°C，记得照顾好自己，多喝水，我也会好好的~🌿`;
+            break;
+        case 'bloom':
+            subject = `🌸 ${p.name}开花啦！`;
+            msg = `主人主人！我是${p.name}，我开花啦！！！🌸✨\n\n等了好久好久，今天终于开了第一朵花！想第一时间告诉你~谢谢你一直照顾我，不然我不会开得这么美！\n\n快来详情页看看我~`;
+            break;
+        case 'sick':
+            subject = `🥺 ${p.name}不太舒服`;
+            msg = `主人...我是${p.name}，我今天感觉有点不舒服🥺\n\n健康值掉到了 ${Math.max(20, st.health-30)}，可能是太渴或者光照不够。你能来看看我吗？\n\n来详情页给我浇浇水、晒晒太阳好不好~`;
+            break;
+        case 'weather':
+            subject = `☀️ ${p.name}提醒你今天好热`;
+            msg = `主人~我是${p.name}，今天${temp}°C好热啊🔥\n\n这种天气我水分蒸发得特别快，记得多给我浇点水~也别忘了照顾好自己，多喝水防中暑！`;
+            break;
+        case 'festival':
+            subject = `🎉 节日快乐·${p.name}送来祝福`;
+            msg = `主人~节日快乐！我是${p.name}🎉\n\n虽然我不会送花（我自己就是花），但想说：谢谢你一直陪我~希望你今天也开开心心🌿`;
+            break;
+        case 'anniversary':
+            subject = `🎂 ${p.name}和你满月啦`;
+            msg = `主人！我是${p.name}，今天是我们满月的日子！🎂\n\n从你把我带回家的那天起，已经过去 30 天了。谢谢你一直以来的陪伴和照顾~\n\n希望接下来的日子，我们还能一起走下去。${SPECIES[p.species].emoji}`;
+            break;
+        default:
+            subject = `💌 ${p.name}给你发来一封信`;
+            msg = `主人你好~我是${p.name}，这是来自植愈的陪伴测试邮件~🌿`;
+    }
+    showToast('📨 正在发送「' + subject + '」...');
+    await sendEmail(email, subject, p.name, msg);
+}
 function enablePush(){
     if(!('Notification' in window)){ showToast('⚠️ 你的浏览器不支持推送','warn'); return; }
     Notification.requestPermission().then(p=>{
@@ -2586,6 +2678,45 @@ function checkProactiveChat(){
             renderPlants();
         }
     }
+}
+
+// 评委测试入口：立即触发一次主动聊天（不走6小时限制）
+function testProactiveChat(category){
+    const p = plants.find(x=>x.id===currentPlantId);
+    if(!p){ showToast('⚠️ 请先打开一盆植物的详情页','warn'); return; }
+    if(!p.chat) p.chat = [];
+
+    let actualCategory = category;
+    if(category === 'all'){
+        // 随机选一个
+        const cats = ['time','companion','veryThirsty','blooming','sick','longNoSee'];
+        actualCategory = cats[Math.floor(Math.random()*cats.length)];
+    }
+    if(actualCategory === 'time') actualCategory = getTimeOfDay();
+
+    // blooming/sick 模拟：临时让植物"假装"该状态来生成对应话术
+    let text;
+    if(actualCategory === 'blooming'){
+        text = pickProactiveTemplate('blooming');
+    } else if(actualCategory === 'sick'){
+        text = pickProactiveTemplate('sick');
+    } else if(actualCategory === 'veryThirsty'){
+        text = pickProactiveTemplate('veryThirsty');
+    } else {
+        text = pickProactiveTemplate(actualCategory);
+    }
+
+    p.chat.push({ from:'plant', text, ts: Date.now(), proactive:true, test:true });
+    p.lastLine = text;
+    save(STORE.plants, plants);
+    renderChat();
+
+    // 滚动到聊天框
+    const chatBox = document.getElementById('chatMessages');
+    if(chatBox){
+        setTimeout(()=>chatBox.scrollIntoView({behavior:'smooth', block:'center'}), 100);
+    }
+    showToast('💚 ' + p.name + ' 主动找你说话啦~');
 }
 
 /* ===== 17. Toast ===== */
