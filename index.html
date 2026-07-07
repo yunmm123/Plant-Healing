@@ -2231,7 +2231,14 @@ function submitDiary(){
 }
 function renderDiary(){
     const filter = document.getElementById('diaryPlantFilter');
-    filter.innerHTML = '<option value="">🌿 全部植物</option>' + plants.map(p=>`<option value="${p.id}">${SPECIES[p.species].emoji} ${esc(p.name)}</option>`).join('');
+    // 只在 options 数量变化时才重新渲染，避免重置用户的选择
+    const currentVal = filter.value;
+    const expectedOptions = plants.length + 1; // 全部植物 + 每盆植物
+    if(filter.options.length !== expectedOptions){
+        filter.innerHTML = '<option value="">🌿 全部植物</option>' + plants.map(p=>`<option value="${p.id}">${SPECIES[p.species].emoji} ${esc(p.name)}</option>`).join('');
+        // 尝试保留之前的选择
+        if(currentVal) filter.value = currentVal;
+    }
     const pid = filter.value;
     const list = pid ? diary.filter(d=>d.plantId===pid) : diary;
     const tl = document.getElementById('diaryTimeline');
