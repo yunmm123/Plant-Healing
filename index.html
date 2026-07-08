@@ -816,7 +816,7 @@ a{color:inherit;text-decoration:none}
 <div class="mobile-menu" id="mobileMenu">
   <a href="#plants" data-nav>🌿 我的植物</a>
   <a href="#diary" data-nav>📖 成长日记</a>
-  <a href="#achv" data-nav> 成就</a>
+  <a href="#achv" data-nav>🏆 成就</a>
   <a href="#about" data-nav>💚 关于</a>
   <button class="nav-cta" onclick="openAddModal()" style="margin-top:.5rem">+ 添加植物</button>
 </div>
@@ -834,7 +834,7 @@ a{color:inherit;text-decoration:none}
       <div class="hero-blob b3"></div>
       <div class="hero-float" style="left:6%;animation-delay:0s">🍃</div>
       <div class="hero-float" style="left:72%;animation-delay:-4s">🌿</div>
-      <div class="hero-float" style="left:42%;animation-delay:-8s"></div>
+      <div class="hero-float" style="left:42%;animation-delay:-8s">🌱</div>
       <div class="hero-float" style="left:88%;animation-delay:-2s">🌸</div>
     </div>
     <div class="container hero-inner">
@@ -1345,13 +1345,16 @@ a{color:inherit;text-decoration:none}
       <canvas id="cameraCanvas" style="display:none"></canvas>
       <div id="cameraError" style="display:none;padding:2rem;text-align:center;color:#fff">
         <p style="font-size:1.1rem;margin-bottom:.5rem">📷 无法访问摄像头</p>
-        <p style="font-size:.85rem;opacity:.8">请允许浏览器使用摄像头权限<br>或检查设备是否有摄像头</p>
+        <p style="font-size:.85rem;opacity:.8;margin-bottom:1rem">请允许浏览器使用摄像头权限<br>或检查设备是否有摄像头</p>
+        <button class="btn btn-ghost" onclick="document.getElementById('cameraAlbumInput').click()" style="background:#fff;color:var(--green-700);font-size:.85rem;padding:.6rem 1.2rem">📁 从相册选择图片</button>
       </div>
     </div>
-    <div style="display:flex;gap:.8rem;margin-top:1.2rem;justify-content:center">
+    <div style="display:flex;gap:.8rem;margin-top:1.2rem;justify-content:center;flex-wrap:wrap">
       <button class="btn btn-ghost" onclick="closeCamera()">取消</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('cameraAlbumInput').click()" style="font-size:.85rem">📁 从相册选择</button>
       <button class="btn btn-primary" onclick="capturePhoto()" id="captureBtn">📷 拍照</button>
     </div>
+    <input type="file" accept="image/*" id="cameraAlbumInput" style="display:none" onchange="pickFromAlbum(event)">
   </div>
 </div>
 
@@ -1632,7 +1635,7 @@ const STORE = {
     diagnose:      'zhiyu_diagnose'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '3.3.0';
+const APP_VERSION = '3.4.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 设备指纹：取相对稳定的浏览器特征组合，用于"版本+设备"双绑定
@@ -1658,6 +1661,9 @@ function getDeviceFingerprint(){
     const savedStamp = localStorage.getItem(STORE.version);
     if(savedStamp !== stamp){
         Object.values(STORE).forEach(k => { if(k !== STORE.version) localStorage.removeItem(k); });
+        // 同步清理非 STORE 管理的标志位（版本升级后重新播种 + 重新弹引导）
+        localStorage.removeItem('zhiyu_seeded');
+        localStorage.removeItem('zhiyu_onboarded');
         localStorage.setItem(STORE.version, stamp);
         console.log('数据已重置（版本/设备变化）:', stamp);
     }
@@ -1794,10 +1800,7 @@ function openDetail(id){
         <div class="status-item"><div class="status-row"><span>🌡️ 温度</span><span id="tempDisplay">${getTempNow()}°C</span></div><div class="status-bar"><div class="fill fill-temp" style="width:${Math.min(100,getTempNow()*2.5)}%"></div></div></div>
         <div class="status-item"><div class="status-row"><span>🌱 健康值</span><span>${st.health}%</span></div><div class="status-bar"><div class="fill ${st.health<40?'fill-low':'fill-health'}" style="width:${st.health}%"></div></div></div>
       </div>
-      <div class="weather-bar" id="weatherBar">
-        <span class="weather-ic">🌡️</span>
-        <span class="weather-text">正在获取当地天气...</span>
-      </div>
+      <div class="weather-bar" id="weatherBar">${getWeatherBarInitialHTML()}</div>
       <div class="care-actions">
         <button class="care-btn water" onclick="doCare('water')"><span class="ic">💧</span>浇水了</button>
         <button class="care-btn sun" onclick="doCare('sun')"><span class="ic">☀️</span>晒太阳</button>
@@ -1808,13 +1811,47 @@ function openDetail(id){
 
     document.getElementById('chatAvatar').textContent = spec.emoji;
     document.getElementById('chatName').textContent = p.name;
+    // 状态栏跟随植物真实状态更新（渴了/生病/开花 → 状态栏同步反映）
+    const statusEl = document.getElementById('chatStatus');
+    if(statusEl){
+        let prefix = '在线';
+        if(p.sick) prefix = '🥺 不太舒服';
+        else if(p.blooming) prefix = '🌸 开心开花中';
+        else if(st.mood==='veryThirsty') prefix = '💧 很渴';
+        else if(st.mood==='thirsty') prefix = '有点渴';
+        statusEl.textContent = prefix + ' · 想和你聊天';
+    }
     renderChat();
     renderQuickReplies();
     renderCalendar();
     loadReminderUI();
     showView('detail');
-    // 异步拉取真实天气，更新温度条和天气信息条
-    refreshWeatherUI();
+    // 天气：有缓存则直接渲染，无缓存则显示"点击获取"按钮（避免首次进详情就弹定位授权）
+    // 用户主动点击 weatherBar 内按钮时才调用 refreshWeatherUI() 触发定位+拉取
+}
+
+// 渲染天气条初始内容：有缓存直接显示，无缓存显示"点击获取"按钮（避免首次进详情弹定位授权）
+function getWeatherBarInitialHTML(){
+    const cached = load(STORE.weather, null);
+    if(cached && (Date.now() - cached.ts) < 3*3600000){
+        // 同步填充内存缓存，避免后续重复请求
+        if(!currentWeather) currentWeather = cached;
+        const wIcon = cached.icon || '🌡️';
+        const wDesc = cached.desc || '';
+        const wCity = cached.city && !cached.fallback ? `<span class="city">📍${cached.city}</span>` : '';
+        const wExtra = !cached.fallback ? `<div class="weather-detail">
+            <span>💧 湿度 ${cached.humidity||'-'}%</span>
+            <span>🌬️ 风速 ${cached.wind||'-'}km/h</span>
+            <span>体感 ${cached.feelsLike||'-'}°C</span>
+        </div>` : '';
+        // 同步更新温度数值（如果在详情页）
+        const td = document.getElementById('tempDisplay');
+        if(td) td.textContent = cached.temp + '°C';
+        return `<span class="weather-ic">${wIcon}</span><span class="weather-text">${wDesc} ${cached.temp}°C${wCity}${wExtra}</span>`;
+    }
+    // 无缓存：显示按钮，用户主动点击才触发定位+拉取
+    return `<span class="weather-ic">📍</span>
+        <span class="weather-text" style="display:flex;align-items:center;flex-wrap:wrap;gap:.4rem">想知道今天该不该浇水？<button class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.8rem" onclick="refreshWeatherUI()">📍 获取当地天气</button></span>`;
 }
 
 // 更新天气UI：温度数值 + 天气信息条
@@ -2595,6 +2632,36 @@ function closeCamera(){
         cameraStream = null;
     }
     document.getElementById('cameraModal').classList.remove('show');
+}
+// 从相册选图（无摄像头环境的备选路径）
+function pickFromAlbum(e){
+    const file = e.target.files[0];
+    if(!file){ e.target.value=''; return; }
+    const reader = new FileReader();
+    reader.onload = ev=>{
+        const dataUrl = ev.target.result;
+        if(cameraTarget === 'plant'){
+            previewPhotoData = dataUrl;
+            const pv = document.getElementById('photoPreview');
+            pv.innerHTML = `<img src="${dataUrl}">`;
+            pv.style.background = '#fff';
+            closeCamera();
+            showToast('✅ 已选择图片');
+        } else if(cameraTarget === 'diary'){
+            previewDiaryPhotoData = dataUrl;
+            const pv = document.getElementById('diaryPhotoPreview');
+            pv.innerHTML = `<img src="${dataUrl}">`;
+            pv.style.background = '#fff';
+            closeCamera();
+            showToast('✅ 已选择图片');
+        } else if(cameraTarget === 'diagnose'){
+            closeCamera();
+            showToast('🔍 AI 正在看图…');
+            compressPhotoForAIAsync(dataUrl, 800, 0.8).then(c => runDiagnose(c));
+        }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // 允许重复选同一文件
 }
 
 // 压缩图片给 AI 用：限制最长边到 maxSize，jpeg 质量 0.8
@@ -3720,7 +3787,14 @@ function checkProactiveChat(){
             // 网页在前台 → 直接刷新聊天UI
             if(currentPlantId && document.getElementById('view-detail').classList.contains('active')){
                 const p = plants.find(x=>x.id===currentPlantId);
-                if(p) renderChat();
+                if(p){
+                    renderChat();
+                    // 主动陪伴：若开启自动朗读，朗读当前植物最新一条主动消息
+                    const lastMsg = p.chat[p.chat.length-1];
+                    if(settings.autoSpeak && _speechSupported && lastMsg && lastMsg.from==='plant' && lastMsg.proactive && lastMsg.ts === now){
+                        speakMessage(p, p.chat.length-1, lastMsg.text);
+                    }
+                }
             }
             if(document.getElementById('view-list').classList.contains('active')){
                 renderPlants();
@@ -3758,6 +3832,10 @@ function testProactiveChat(category){
         setTimeout(()=>chatBox.scrollIntoView({behavior:'smooth', block:'center'}), 100);
     }
     showToast('💚 ' + p.name + ' 主动找你说话啦~');
+    // 若开启自动朗读，朗读刚推送的主动消息
+    if(settings.autoSpeak && _speechSupported){
+        speakMessage(p, p.chat.length-1, text);
+    }
 }
 
 // 评委测试入口：模拟"网页最小化"场景，立即弹桌面通知
@@ -3867,8 +3945,23 @@ function setupNav(){
         else { nav.classList.remove('hide'); }
         lastNavScroll = y;
     });
-    document.getElementById('navToggle').addEventListener('click', ()=>{
-        document.getElementById('mobileMenu').classList.toggle('open');
+    const navToggle = document.getElementById('navToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    navToggle.addEventListener('click', e=>{
+        e.stopPropagation();
+        mobileMenu.classList.toggle('open');
+    });
+    // 点击菜单外部关闭（移动端）
+    document.addEventListener('click', e=>{
+        if(mobileMenu.classList.contains('open')
+            && !mobileMenu.contains(e.target)
+            && e.target !== navToggle){
+            mobileMenu.classList.remove('open');
+        }
+    });
+    // CTA 关菜单
+    mobileMenu.querySelectorAll('.nav-cta').forEach(b=>{
+        b.addEventListener('click', ()=> mobileMenu.classList.remove('open'));
     });
     document.querySelectorAll('[data-nav]').forEach(a=>{
         a.addEventListener('click', e=>{
@@ -3894,6 +3987,10 @@ function setupNav(){
 /* ===== 20. 预置示例数据 ===== */
 function seedSampleData(){
     if(plants.length) return;
+    // 用 seeded 标志位防止"删空后刷新又复活"，让评委能看到空状态
+    const seeded = localStorage.getItem('zhiyu_seeded');
+    if(seeded) return;
+    localStorage.setItem('zhiyu_seeded', '1');
     const now = Date.now();
     // 示例 1：开心的绿萝（刚浇过水）
     plants.push({
@@ -4090,7 +4187,8 @@ function init(){
     renderPlants();
     renderDiary();
     renderAchievements();
-    checkAchievements();
+    // 成就检测延迟到引导浮层关闭后执行，避免示例数据触发庆祝弹窗盖住引导
+    setTimeout(()=>checkAchievements(), 3500);
     // 首次访问展示评委引导（勾选"不再显示"后不再弹出）
     try{
         const hide = localStorage.getItem('zhiyu_onboarded');
