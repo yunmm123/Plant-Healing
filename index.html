@@ -403,6 +403,24 @@ a{color:inherit;text-decoration:none}
 .msg .bubble{padding:.75rem 1.05rem;border-radius:18px;font-size:.94rem;line-height:1.6}
 .msg.plant .bubble{background:var(--green-50);color:var(--stone-700);border:1px solid var(--green-100);border-bottom-left-radius:5px}
 .msg.user .bubble{background:linear-gradient(135deg,var(--green-700),var(--green-800));color:#fff;border-bottom-right-radius:5px}
+/* 朗读按钮：浮在植物消息气泡右下角 */
+.msg.plant{flex-direction:column;align-items:flex-start;gap:.25rem}
+.msg.plant .speak-btn{
+  align-self:flex-end;
+  background:transparent;border:none;cursor:pointer;
+  font-size:.72rem;color:var(--stone-400);
+  padding:.15rem .5rem;border-radius:10px;
+  display:inline-flex;align-items:center;gap:.25rem;
+  transition:all .2s;
+}
+.msg.plant .speak-btn:hover{color:var(--green-700);background:var(--green-50)}
+.msg.plant .speak-btn.speaking{color:var(--green-700);font-weight:700}
+.msg.plant .speak-btn.speaking::before{
+  content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--green-500);margin-right:3px;
+  animation:speakPulse 1s ease-in-out infinite;
+}
+@keyframes speakPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.5}}
 .typing{display:flex;gap:.3rem;align-items:center;padding:.7rem 1rem;background:var(--green-50);border:1px solid var(--green-100);border-radius:18px;border-bottom-left-radius:5px;width:fit-content}
 .typing span{width:7px;height:7px;border-radius:50%;background:var(--green-400);animation:typing 1.3s infinite}
 .typing span:nth-child(2){animation-delay:.15s}
@@ -1108,6 +1126,18 @@ a{color:inherit;text-decoration:none}
                 </p>
               </div>
               <button class="btn btn-ghost" onclick="testAi()" style="width:100%;justify-content:center">🧪 测试AI对话</button>
+              <label class="switch" style="margin-top:1.1rem">
+                <input type="checkbox" id="autoSpeakSwitch" onchange="toggleAutoSpeak()">
+                <span class="track"></span>
+                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">🔊 自动语音朗读AI回复</span>
+              </label>
+              <p style="font-size:.78rem;color:var(--stone-400);margin-top:.4rem;line-height:1.5">
+                开启后每条AI回复会自动用声音"说"出来。每个品种有独立音色（绿萝温柔女声、仙人掌粗犷男声…），生病时语速变慢、开花时音调上扬。植物真的会"开口说话"。
+              </p>
+              <div style="display:flex;gap:.6rem;margin-top:.7rem">
+                <button class="btn btn-ghost" onclick="testSpeak()" style="flex:1;justify-content:center">🔊 试听朗读</button>
+                <button class="btn btn-ghost" onclick="stopSpeak()" style="flex:1;justify-content:center">⏹ 停止</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1348,6 +1378,41 @@ const ACHIEVEMENTS = [
     { id:'first_bloom',   icon:'🌸', title:'第一次开花', desc:'见证植物第一次开花' },
     { id:'plant_doctor',  icon:'🩺', title:'植物医生', desc:'成功救回一株生病的植物' },
     { id:'small_forest',  icon:'🏡', title:'小森林',  desc:'拥有 5 盆以上植物' },
+    { id:'first_speak',   icon:'🔊', title:'初次发声', desc:'让植物开口说话（朗读）' }
+];
+
+/* ===== 1.1 语音系统配置（浏览器原生 SpeechSynthesis，完全免费）===== */
+// 每个品种独立的音色档案：rate 语速 / pitch 音调 / gender 优先声音性别
+// 让植物"开口"时有人格感：绿萝温柔女声、仙人掌粗犷男声、向日葵元气少女…
+const VOICE_PROFILE = {
+    '绿萝':    { rate:0.95, pitch:1.10, gender:'female' },
+    '仙人掌':  { rate:1.00, pitch:0.80, gender:'male'   },
+    '多肉':    { rate:0.85, pitch:1.00, gender:'female' },
+    '月季':    { rate:1.05, pitch:1.20, gender:'female' },
+    '龟背竹':  { rate:0.90, pitch:0.85, gender:'male'   },
+    '向日葵':  { rate:1.10, pitch:1.30, gender:'female' },
+    '薄荷':    { rate:1.05, pitch:1.15, gender:'female' },
+    '吊兰':    { rate:0.95, pitch:1.05, gender:'female' },
+    '芦荟':    { rate:0.95, pitch:0.90, gender:'male'   },
+    '虎尾兰':  { rate:0.92, pitch:0.85, gender:'male'   },
+    '富贵竹':  { rate:0.95, pitch:0.95, gender:'male'   },
+    '茉莉花':  { rate:0.95, pitch:1.15, gender:'female' },
+    '发财树':  { rate:0.90, pitch:0.90, gender:'male'   },
+    '常春藤':  { rate:1.05, pitch:1.10, gender:'female' }
+};
+// 自定义品种默认音色（温柔女声）
+const DEFAULT_VOICE = { rate:0.95, pitch:1.10, gender:'female' };
+// 全局 voice 列表（异步加载，浏览器加载完后会填充）
+let _voices = [];
+let _voicesReady = false;
+if('speechSynthesis' in window){
+    const loadVoices = ()=>{ _voices = window.speechSynthesis.getVoices(); _voicesReady = _voices.length>0; };
+    loadVoices();
+    // Chrome 是异步加载，要监听事件
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+// 在 ACHIEVEMENTS 后追加：保留原有的后续成就项
+ACHIEVEMENTS.push(
     { id:'big_garden',    icon:'🌳', title:'大花园',  desc:'拥有 10 盆以上植物' },
     { id:'diary_master',  icon:'📝', title:'日记达人', desc:'写了 10 篇日记' },
     { id:'diary_expert',  icon:'✍️', title:'日记专家', desc:'写了 30 篇日记' },
@@ -1356,7 +1421,7 @@ const ACHIEVEMENTS = [
     { id:'chat_lover',    icon:'💬', title:'话痨之交', desc:'和植物聊天 50 次' },
     { id:'all_species',   icon:'🌿', title:'收集图鉴', desc:'尝试过 5 种不同品种' },
     { id:'perfect_care',  icon:'✨', title:'完美照料', desc:'让植物健康值达到 100' }
-];
+);
 
 /* ===== AI 话术库（每品种 15+ 条，覆盖多场景） ===== */
 const DIALOGUE = {
@@ -1466,7 +1531,7 @@ const STORE = {
     location:      'zhiyu_location'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '3.1.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 设备指纹：取相对稳定的浏览器特征组合，用于"版本+设备"双绑定
@@ -1508,12 +1573,13 @@ customSpecies.forEach((s, i) => { if(!SPECIES[s.name]) SPECIES[s.name] = s; });
 const DEFAULT_AI_KEY = '';
 // 提醒场景默认值：所有陪伴场景默认开启
 const DEFAULT_SCENES = { thirsty:true, companion:true, bloom:true, sick:true, weather:true, festival:true, anniversary:true };
-let settings = load(STORE.settings, { emailReminder:false, email:'', reminderDays:3, pushEnabled:false, aiApiKey:DEFAULT_AI_KEY, aiEnabled:true, reminderScenes:{...DEFAULT_SCENES}, proactiveChat:true });
+let settings = load(STORE.settings, { emailReminder:false, email:'', reminderDays:3, pushEnabled:false, aiApiKey:DEFAULT_AI_KEY, aiEnabled:true, reminderScenes:{...DEFAULT_SCENES}, proactiveChat:true, autoSpeak:false });
 // 老用户迁移：补齐缺失字段
 if(settings.aiApiKey === undefined){ settings.aiApiKey = DEFAULT_AI_KEY; }
 if(settings.aiEnabled === undefined){ settings.aiEnabled = true; }
 if(!settings.reminderScenes){ settings.reminderScenes = {...DEFAULT_SCENES}; }
 if(settings.proactiveChat === undefined){ settings.proactiveChat = true; }
+if(settings.autoSpeak === undefined){ settings.autoSpeak = false; }
 if(!settings.reminderDays){ settings.reminderDays = 3; }
 let currentPlantId = null;
 let selectedSpecies = null;
@@ -1705,12 +1771,19 @@ function renderChat(){
         const greet = lib.greeting[Math.floor(Math.random()*lib.greeting.length)];
         p.chat.push({ from:'plant', text:greet, ts:Date.now() });
     }
-    box.innerHTML = p.chat.map(m=>`
-        <div class="msg ${m.from}">
-          <div class="ava">${m.from==='plant'?SPECIES[p.species].emoji:'🧑'}</div>
+    box.innerHTML = p.chat.map((m,i)=>{
+        const isPlant = m.from==='plant';
+        const speakBtn = isPlant && _speechSupported
+            ? `<button class="speak-btn" data-idx="${i}" onclick="speakAt(${i})">🔊 朗读</button>`
+            : '';
+        return `<div class="msg ${m.from}">
+          <div class="ava">${isPlant?SPECIES[p.species].emoji:'🧑'}</div>
           <div class="bubble">${esc(m.text)}</div>
-        </div>`).join('');
+          ${speakBtn}
+        </div>`;
+    }).join('');
     box.scrollTop = box.scrollHeight;
+    _updateSpeakButtons();
     save(STORE.plants, plants);
 }
 function renderQuickReplies(){
@@ -1864,6 +1937,102 @@ async function callAI(plant, userText){
     throw new Error('AI返回数据异常');
 }
 
+/* ===== 7.5 语音朗读（浏览器原生 SpeechSynthesis，完全免费）===== */
+// 全局：当前正在朗读的消息索引（用于切换暂停/恢复、按钮态切换）
+let _speakingIdx = -1;
+let _speechSupported = ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined');
+
+// 从 _voices 里挑一个最匹配的中文 voice，优先指定性别
+function _pickVoice(gender){
+    if(!_voicesReady || _voices.length === 0) return null;
+    // 1) 优先 zh-CN，其次 zh-TW / zh-HK / 任何 zh*
+    const zh = _voices.filter(v => /zh(-|_)?(CN|TW|HK)?/i.test(v.lang) || v.lang.toLowerCase().startsWith('zh'));
+    if(zh.length === 0) return null;
+    // 2) 性别匹配：浏览器对 voice.name 有命名约定（如 Microsoft Xiaoxiao 女、Yunyang 男）
+    // 常见关键词：女 - xiaoxiao/xiaoyi/huihui/yunxi(女声版)/yaoyao/tingting；男 - yunyang/yunjian/yunfeng/zhiyu(部分)
+    const femaleHints = /xiaoxiao|xiaoyi|huihui|yaoyao|tingting|mei|jia|female|女/i;
+    const maleHints   = /yunyang|yunjian|yunfeng|kangkang|male|男/i;
+    const want = gender === 'male' ? maleHints : femaleHints;
+    const matched = zh.filter(v => want.test(v.name));
+    return matched[0] || zh[0];
+}
+
+// 把文本里的 emoji / 多余符号清理掉，避免被读成奇怪的东西
+function _cleanTextForSpeech(text){
+    return text
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}]/gu, '') // emoji & 符号
+        .replace(/[\(（]AI[^)）]*[\)）]/g, '')        // "(AI 暂时连不上…)" 这种提示语，兼容中英文括号
+        .replace(/[\r\n]+/g, '，')                     // 换行转停顿
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+// 朗读一条植物消息；再点一次 = 停止
+function speakMessage(plant, msgIdx, text){
+    if(!_speechSupported){
+        showToast('🔊 当前浏览器不支持语音朗读', 'warn');
+        return;
+    }
+    // 已经在朗读这一条 → 停止
+    if(window.speechSynthesis.speaking && _speakingIdx === msgIdx){
+        window.speechSynthesis.cancel();
+        _speakingIdx = -1;
+        _updateSpeakButtons();
+        return;
+    }
+    // 切到新消息前，先取消旧的
+    window.speechSynthesis.cancel();
+    _speakingIdx = msgIdx;
+
+    const profile = VOICE_PROFILE[plant.species] || DEFAULT_VOICE;
+    // 状态感知：生病时语速变慢、音调降低；开花时音调上扬
+    let rate = profile.rate, pitch = profile.pitch;
+    if(plant.sick){ rate *= 0.85; pitch *= 0.9; }
+    if(plant.blooming){ pitch *= 1.08; }
+
+    const clean = _cleanTextForSpeech(text);
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = 'zh-CN';
+    u.rate = Math.max(0.6, Math.min(1.3, rate));
+    u.pitch = Math.max(0.5, Math.min(2.0, pitch));
+    const v = _pickVoice(profile.gender);
+    if(v) u.voice = v;
+    u.onend = ()=>{ _speakingIdx = -1; _updateSpeakButtons(); };
+    u.onerror = ()=>{ _speakingIdx = -1; _updateSpeakButtons(); };
+    window.speechSynthesis.speak(u);
+    _updateSpeakButtons();
+    unlockAchv('first_speak');
+}
+
+// 全局 helper：根据消息索引朗读（renderChat 里 onclick 调用，访问不到局部 plant）
+function speakAt(idx){
+    const p = plants.find(x=>x.id===currentPlantId);
+    if(!p || !p.chat || !p.chat[idx]) return;
+    speakMessage(p, idx, p.chat[idx].text);
+}
+
+function stopSpeak(){
+    if(_speechSupported && window.speechSynthesis.speaking){
+        window.speechSynthesis.cancel();
+        _speakingIdx = -1;
+        _updateSpeakButtons();
+    }
+}
+
+// 更新所有朗读按钮的视觉状态（朗读中显示"⏸ 朗读中"）
+function _updateSpeakButtons(){
+    document.querySelectorAll('.speak-btn').forEach(btn=>{
+        const idx = parseInt(btn.dataset.idx, 10);
+        if(idx === _speakingIdx){
+            btn.textContent = '⏸ 朗读中';
+            btn.classList.add('speaking');
+        } else {
+            btn.textContent = '🔊 朗读';
+            btn.classList.remove('speaking');
+        }
+    });
+}
+
 async function sendMessage(){
     if(isSending) return;
     const input = document.getElementById('chatInput');
@@ -1911,6 +2080,10 @@ async function sendMessage(){
     save(STORE.plants, plants);
     renderChat();
     isSending = false;
+    // 自动朗读：用户在设置里开了"自动朗读AI回复"时，新消息自动播放
+    if(settings.autoSpeak && _speechSupported && !usedFallback){
+        speakAt(p.chat.length - 1);
+    }
 }
 
 /* ===== 9. 养护操作 ===== */
@@ -2592,6 +2765,8 @@ function loadReminderUI(){
     document.getElementById('reminderDays').value = settings.reminderDays || spec.waterCycle;
     document.getElementById('aiSwitch').checked = settings.aiEnabled;
     document.getElementById('aiKeyInput').value = settings.aiApiKey || '';
+    const autoSpeakEl = document.getElementById('autoSpeakSwitch');
+    if(autoSpeakEl) autoSpeakEl.checked = settings.autoSpeak === true;
     // 加载场景勾选状态
     const s = settings.reminderScenes || {};
     ['Thirsty','Companion','Bloom','Sick','Weather','Festival','Anniversary'].forEach(k=>{
@@ -2646,6 +2821,25 @@ function testAi(){
     }).catch(e=>{
         showToast('❌ 测试失败：' + e.message, 'warn');
     });
+}
+function toggleAutoSpeak(){
+    settings.autoSpeak = document.getElementById('autoSpeakSwitch').checked;
+    save(STORE.settings, settings);
+    if(settings.autoSpeak){
+        showToast('🔊 已开启自动朗读，植物会用声音回复你');
+    } else {
+        showToast('已关闭自动朗读');
+        stopSpeak();
+    }
+}
+function testSpeak(){
+    if(!_speechSupported){ showToast('🔊 当前浏览器不支持语音朗读', 'warn'); return; }
+    const p = plants.find(x=>x.id===currentPlantId) || plants[0];
+    if(!p){ showToast('⚠️ 请先添加一盆植物','warn'); return; }
+    // 试听当前品种音色：用植物的口吻说一句开场白
+    const testLine = `主人你好呀，我是${p.name}，我是一盆${p.species}，很高兴能开口和你说话~`;
+    speakMessage(p, -1, testLine);
+    showToast(`🔊 试听 ${p.species} 的音色…`);
 }
 function toggleEmailReminder(){
     settings.emailReminder = document.getElementById('emailSwitch').checked;
