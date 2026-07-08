@@ -176,6 +176,19 @@ a{color:inherit;text-decoration:none}
 }
 .hero p.lead{font-size:clamp(1.02rem,2vw,1.2rem);color:var(--stone-600);max-width:48ch;margin-bottom:2.2rem;line-height:1.75}
 .hero-cta{display:flex;gap:.9rem;flex-wrap:wrap}
+.hero-demo{margin-top:1.4rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.demo-btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.7rem 1.3rem;border-radius:999px;
+  background:linear-gradient(135deg,#fb923c,#f59e0b);color:#fff;
+  border:none;cursor:pointer;font-weight:700;font-size:.88rem;
+  box-shadow:0 6px 16px rgba(245,158,11,.35);
+  transition:all .25s; font-family:inherit;
+}
+.demo-btn:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(245,158,11,.45)}
+.demo-btn .arrow{transition:transform .25s}
+.demo-btn:hover .arrow{transform:translateX(3px)}
+.demo-hint{font-size:.78rem;color:var(--stone-400)}
 .btn{
   display:inline-flex;align-items:center;gap:.5rem;
   padding:.9rem 1.8rem;border-radius:999px;
@@ -846,6 +859,12 @@ a{color:inherit;text-decoration:none}
           <button class="btn btn-primary btn-lg" onclick="openAddModal()">🌱 添加我的第一盆植物</button>
           <a href="#plants" class="btn btn-ghost btn-lg" data-nav>👀 看看植物们</a>
         </div>
+        <div class="hero-demo">
+          <button class="demo-btn" onclick="enterDemoMode()" title="评委一键体验：准备测试植物+邮箱+开启AI">
+            <span>🎬</span><span>评委演示模式</span><span class="arrow">→</span>
+          </button>
+          <span class="demo-hint">5 秒准备好所有功能，无需配置</span>
+        </div>
       </div>
       <div class="hero-visual">
         <svg class="hero-plant" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg">
@@ -1046,7 +1065,10 @@ a{color:inherit;text-decoration:none}
     <div class="container">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.6rem">
         <button class="detail-back" onclick="showView('list')" style="margin:0">← 回到我的植物</button>
-        <button class="btn btn-ghost" onclick="deletePlant()" style="padding:.55rem 1.1rem;font-size:.85rem;border-color:var(--rose-400);color:var(--rose-500)">🗑️ 删除这盆植物</button>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="sharePlant()" style="padding:.55rem 1.1rem;font-size:.85rem;border-color:var(--green-400);color:var(--green-700)">📸 生成分享卡片</button>
+          <button class="btn btn-ghost" onclick="deletePlant()" style="padding:.55rem 1.1rem;font-size:.85rem;border-color:var(--rose-400);color:var(--rose-500)">🗑️ 删除这盆植物</button>
+        </div>
       </div>
       <div class="detail-grid">
         <div>
@@ -1354,6 +1376,24 @@ a{color:inherit;text-decoration:none}
 
 <!-- EmailJS 直连 REST API，无需引入 SDK -->
 
+<!-- ===== 分享卡片模态框 ===== -->
+<div class="modal" id="shareModal">
+  <div class="modal-card" style="max-width:440px;text-align:center">
+    <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('show')">✕</button>
+    <div class="modal-head">
+      <h3>📸 植物状态卡片</h3>
+      <p class="sub">长按图片或点击下方按钮保存，分享给朋友看看你的植物</p>
+    </div>
+    <div id="shareCanvasWrap" style="border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow);background:linear-gradient(135deg,#f0fdf4,#ecfdf5)">
+      <canvas id="shareCanvas" width="400" height="600" style="width:100%;display:block"></canvas>
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:1.2rem">
+      <button class="btn btn-ghost" onclick="document.getElementById('shareModal').classList.remove('show')" style="flex:1;justify-content:center">关闭</button>
+      <button class="btn btn-primary" onclick="downloadShareCard()" style="flex:1;justify-content:center">⬇ 保存图片</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 评委/新用户引导浮层 ===== -->
 <div class="modal" id="onboardingModal">
   <div class="modal-card" style="max-width:540px;text-align:center">
@@ -1611,7 +1651,7 @@ const STORE = {
     diagnose:      'zhiyu_diagnose'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.3.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 设备指纹：取相对稳定的浏览器特征组合，用于"版本+设备"双绑定
@@ -3895,6 +3935,223 @@ function seedSampleData(){
     );
     save(STORE.plants, plants);
     save(STORE.diary, diary);
+}
+
+/* ===== 19.9 植物分享卡片：Canvas 绘制 + 下载 ===== */
+let _shareCardDataUrl = null;
+function sharePlant(){
+    const p = plants.find(x=>x.id===currentPlantId);
+    if(!p){ showToast('⚠️ 请先打开一盆植物','warn'); return; }
+    document.getElementById('shareModal').classList.add('show');
+    drawShareCard(p);
+}
+async function drawShareCard(p){
+    const canvas = document.getElementById('shareCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const spec = SPECIES[p.species] || {emoji:'🌿', personality:''};
+    const st = getPlantState(p);
+    // 1) 背景渐变
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#f0fdf4');
+    g.addColorStop(1, '#ecfdf5');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // 2) 顶部装饰圆
+    ctx.fillStyle = 'rgba(16,185,129,0.12)';
+    ctx.beginPath(); ctx.arc(W*0.85, 60, 90, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(245,158,11,0.10)';
+    ctx.beginPath(); ctx.arc(W*0.15, H*0.92, 70, 0, Math.PI*2); ctx.fill();
+    // 3) 植物照片或大 emoji
+    if(p.photo){
+        try{
+            const img = await loadImageAsync(p.photo);
+            // 圆形裁剪画植物照
+            const cx = W/2, cy = 175, r = 90;
+            ctx.save();
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.closePath(); ctx.clip();
+            ctx.drawImage(img, cx-r, cy-r, r*2, r*2);
+            ctx.restore();
+            // 圆边
+            ctx.strokeStyle = '#10b981'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+        }catch(e){ drawEmojiAvatar(ctx, spec.emoji, W/2, 175, 80); }
+    } else {
+        drawEmojiAvatar(ctx, spec.emoji, W/2, 175, 80);
+    }
+    // 4) 植物名 + 品种
+    ctx.fillStyle = '#064e3b';
+    ctx.font = 'bold 30px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, W/2, 310);
+    ctx.fillStyle = '#059669';
+    ctx.font = '16px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillText(p.species + ' · ' + getCompanionDays(p) + ' 天陪伴', W/2, 338);
+    // 5) 状态标签（健康/水分/心情）
+    const tags = [
+        { label:'健康', value:st.health+'/100', color: st.health>=80?'#10b981':st.health>=50?'#f59e0b':'#ef4444' },
+        { label:'水分', value:st.waterPct+'%', color: '#0ea5e9' },
+        { label:'心情', value:st.moodText, color: '#8b5cf6' }
+    ];
+    if(p.blooming) tags.push({ label:'状态', value:'🌸 开花中', color:'#ec4899' });
+    if(p.sick) tags.push({ label:'状态', value:'🥺 生病', color:'#ef4444' });
+    const tagY = 380, tagH = 50, tagGap = 8;
+    const tagW = (W - 40 - (tags.length-1)*tagGap) / tags.length;
+    tags.forEach((t, i)=>{
+        const x = 20 + i*(tagW+tagGap);
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, x, tagY, tagW, tagH, 12); ctx.fill();
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '11px "PingFang SC",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(t.label, x+tagW/2, tagY+18);
+        ctx.fillStyle = t.color;
+        ctx.font = 'bold 14px "PingFang SC",sans-serif';
+        ctx.fillText(t.value, x+tagW/2, tagY+38);
+    });
+    // 6) 最近一句话（如果有）
+    if(p.lastLine){
+        ctx.fillStyle = '#065f46';
+        ctx.font = 'italic 14px "PingFang SC",sans-serif';
+        wrapText(ctx, '"' + p.lastLine + '"', W/2, 460, W-50, 20);
+    }
+    // 7) 底部品牌区
+    ctx.fillStyle = '#064e3b';
+    ctx.font = 'bold 18px "PingFang SC",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🌿 植愈 · AI 植物陪伴', W/2, H-70);
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '12px "PingFang SC",sans-serif';
+    ctx.fillText('会说话 · 会看叶子 · 会写信', W/2, H-50);
+    // 8) 二维码（用在线 API 生成，避免引入库）
+    try{
+        const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent('https://yunmm123.github.io/Plant-Healing/');
+        const qrImg = await loadImageAsync(qrUrl);
+        ctx.drawImage(qrImg, W/2-30, H-145, 60, 60);
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '10px "PingFang SC",sans-serif';
+        ctx.fillText('扫码体验', W/2, H-78);
+    }catch(e){ /* 离线时不画二维码 */ }
+    _shareCardDataUrl = canvas.toDataURL('image/png');
+}
+function drawEmojiAvatar(ctx, emoji, cx, cy, size){
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx, cy, size+8, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, cy, size+8, 0, Math.PI*2); ctx.stroke();
+    ctx.font = size*1.6 + 'px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, cx, cy);
+    ctx.restore();
+}
+function loadImageAsync(src){
+    return new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = ()=>resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+}
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    const chars = text.split('');
+    let line = '', lineCount = 0;
+    for(let i=0; i<chars.length; i++){
+        const test = line + chars[i];
+        if(ctx.measureText(test).width > maxWidth && line){
+            ctx.fillText(line, x, y + lineCount*lineHeight);
+            line = chars[i]; lineCount++;
+            if(lineCount >= 2){ ctx.fillText(line + '…', x, y + lineCount*lineHeight); return; }
+        } else { line = test; }
+    }
+    ctx.fillText(line, x, y + lineCount*lineHeight);
+}
+function downloadShareCard(){
+    if(!_shareCardDataUrl){ showToast('⚠️ 卡片还在生成中…','warn'); return; }
+    const p = plants.find(x=>x.id===currentPlantId);
+    const name = p ? p.name : 'plant';
+    const a = document.createElement('a');
+    a.href = _shareCardDataUrl;
+    a.download = '植愈_' + name + '_' + new Date().toLocaleDateString('zh-CN').replace(/\//g,'') + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showToast('✅ 已保存到下载文件夹');
+}
+function getCompanionDays(p){
+    return Math.max(1, Math.floor((Date.now() - p.addedAt) / 86400000));
+}
+
+/* ===== 20.5 评委演示模式：一键准备好所有功能 ===== */
+function enterDemoMode(){
+    if(!confirm('将清空当前数据并准备 3 盆演示植物（覆盖女声/男声/开花），自动开启 AI、朗读、邮件陪伴。继续？')) return;
+    // 清空旧数据
+    plants = []; diary = [];
+    try{ localStorage.removeItem(STORE.diagnose); }catch(e){}
+    const now = Date.now();
+    // 3 盆植物：覆盖不同音色 + 状态
+    // 1) 绿萝·小绿（女声温柔，刚浇水，开心）→ 适合演示"对话+朗读"
+    plants.push({
+        id:'p_demo_1', name:'小绿', species:'绿萝',
+        photo:null, addedAt: now - 7*86400000,
+        waterLog:[now - 1*86400000], sunLog:[now - 2*86400000], pruneLog:[],
+        chat:[{from:'plant', text:'主人~你来啦！今天我又长了一片新叶子，要不要来看看？🌿', ts:now-3600000}],
+        health:92, sick:false, blooming:false, sleeping:false, lastLine:'主人~你来啦！'
+    });
+    // 2) 仙人掌·刺刺（男声粗犷，渴了很久，状态偏差）→ 适合演示"AI看状态"
+    plants.push({
+        id:'p_demo_2', name:'刺刺', species:'仙人掌',
+        photo:null, addedAt: now - 15*86400000,
+        waterLog:[now - 14*86400000], sunLog:[now - 5*86400000], pruneLog:[],
+        chat:[{from:'plant', text:'咳咳…主人我快渴坏了，能不能给我来点水？🌵', ts:now-7200000}],
+        health:62, sick:false, blooming:false, sleeping:false, lastLine:'咳咳…主人我快渴坏了'
+    });
+    // 3) 月季·粉粉（女声高亢，正在开花）→ 适合演示"开花状态+拍照体检"
+    plants.push({
+        id:'p_demo_3', name:'粉粉', species:'月季',
+        photo:null, addedAt: now - 20*86400000,
+        waterLog:[now - 2*86400000], sunLog:[now - 1*86400000], pruneLog:[now - 6*86400000],
+        chat:[{from:'plant', text:'哇~主人主人！我今天开花啦！快来看看我！🌸✨', ts:now-1800000}],
+        health:95, sick:false, blooming:true, sleeping:false, lastLine:'哇~主人主人！我今天开花啦！'
+    });
+    save(STORE.plants, plants);
+    save(STORE.diary, diary);
+    // 开启所有智能设置
+    settings.aiEnabled = true;
+    settings.autoSpeak = true;
+    settings.emailReminder = true;
+    settings.email = 'demo@zhiyu.example';
+    settings.proactiveChat = true;
+    settings.reminderScenes = {...DEFAULT_SCENES};
+    // 默认全场景都开
+    Object.keys(settings.reminderScenes).forEach(k=>settings.reminderScenes[k]=true);
+    save(STORE.settings, settings);
+    // 解锁演示相关成就
+    unlockAchv('first_plant');
+    // 关掉 onboarding 引导（演示模式用户不需要再看）
+    try{ localStorage.setItem('zhiyu_onboarded', '1'); }catch(e){}
+    const om = document.getElementById('onboardingModal');
+    if(om) om.classList.remove('show');
+    // 跳到第一盆植物详情 + 滚到顶部
+    renderPlants();
+    renderDiary();
+    renderAchievements();
+    showToast('🎬 演示模式已就绪！3 盆植物 + AI + 朗读 + 邮件已全部开启', 'success');
+    setTimeout(()=>{
+        showView('list');
+        setTimeout(()=>{
+            openDetail('p_demo_1');
+            window.scrollTo({top:0, behavior:'smooth'});
+        }, 300);
+    }, 400);
 }
 
 /* ===== 21. 初始化 ===== */
