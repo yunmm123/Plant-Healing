@@ -1622,6 +1622,8 @@ function getMoodLine(plant){
 
 /* ===== 4. 视图路由 ===== */
 function showView(name){
+    // 离开详情页 → 立即停止语音朗读，避免回到列表/首页后还在继续念
+    if(name !== 'detail'){ stopSpeak(); }
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     const v = document.getElementById('view-'+name);
     if(v){ v.classList.add('active'); window.scrollTo({top:0,behavior:'instant'}); }
@@ -1671,6 +1673,8 @@ function renderPlants(){
 function openDetail(id){
     const p = plants.find(x=>x.id===id);
     if(!p) return;
+    // 切植物 → 停止上一株的朗读，避免换到新植物后旧语音还在念
+    if(currentPlantId !== id){ stopSpeak(); }
     currentPlantId = id;
     const spec = SPECIES[p.species];
     const st = getPlantState(p);
