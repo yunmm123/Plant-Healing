@@ -176,19 +176,6 @@ a{color:inherit;text-decoration:none}
 }
 .hero p.lead{font-size:clamp(1.02rem,2vw,1.2rem);color:var(--stone-600);max-width:48ch;margin-bottom:2.2rem;line-height:1.75}
 .hero-cta{display:flex;gap:.9rem;flex-wrap:wrap}
-.hero-demo{margin-top:1.4rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
-.demo-btn{
-  display:inline-flex;align-items:center;gap:.5rem;
-  padding:.7rem 1.3rem;border-radius:999px;
-  background:linear-gradient(135deg,#fb923c,#f59e0b);color:#fff;
-  border:none;cursor:pointer;font-weight:700;font-size:.88rem;
-  box-shadow:0 6px 16px rgba(245,158,11,.35);
-  transition:all .25s; font-family:inherit;
-}
-.demo-btn:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(245,158,11,.45)}
-.demo-btn .arrow{transition:transform .25s}
-.demo-btn:hover .arrow{transform:translateX(3px)}
-.demo-hint{font-size:.78rem;color:var(--stone-400)}
 .btn{
   display:inline-flex;align-items:center;gap:.5rem;
   padding:.9rem 1.8rem;border-radius:999px;
@@ -858,12 +845,6 @@ a{color:inherit;text-decoration:none}
         <div class="hero-cta">
           <button class="btn btn-primary btn-lg" onclick="openAddModal()">🌱 添加我的第一盆植物</button>
           <a href="#plants" class="btn btn-ghost btn-lg" data-nav>👀 看看植物们</a>
-        </div>
-        <div class="hero-demo">
-          <button class="demo-btn" onclick="enterDemoMode()" title="评委一键体验：准备测试植物+邮箱+开启AI">
-            <span>🎬</span><span>评委演示模式</span><span class="arrow">→</span>
-          </button>
-          <span class="demo-hint">5 秒准备好所有功能，无需配置</span>
         </div>
       </div>
       <div class="hero-visual">
@@ -4088,70 +4069,6 @@ function downloadShareCard(){
 }
 function getCompanionDays(p){
     return Math.max(1, Math.floor((Date.now() - p.addedAt) / 86400000));
-}
-
-/* ===== 20.5 评委演示模式：一键准备好所有功能 ===== */
-function enterDemoMode(){
-    if(!confirm('将清空当前数据并准备 3 盆演示植物（覆盖女声/男声/开花），自动开启 AI、朗读、邮件陪伴。继续？')) return;
-    // 清空旧数据
-    plants = []; diary = [];
-    try{ localStorage.removeItem(STORE.diagnose); }catch(e){}
-    const now = Date.now();
-    // 3 盆植物：覆盖不同音色 + 状态
-    // 1) 绿萝·小绿（女声温柔，刚浇水，开心）→ 适合演示"对话+朗读"
-    plants.push({
-        id:'p_demo_1', name:'小绿', species:'绿萝',
-        photo:null, addedAt: now - 7*86400000,
-        waterLog:[now - 1*86400000], sunLog:[now - 2*86400000], pruneLog:[],
-        chat:[{from:'plant', text:'主人~你来啦！今天我又长了一片新叶子，要不要来看看？🌿', ts:now-3600000}],
-        health:92, sick:false, blooming:false, sleeping:false, lastLine:'主人~你来啦！'
-    });
-    // 2) 仙人掌·刺刺（男声粗犷，渴了很久，状态偏差）→ 适合演示"AI看状态"
-    plants.push({
-        id:'p_demo_2', name:'刺刺', species:'仙人掌',
-        photo:null, addedAt: now - 15*86400000,
-        waterLog:[now - 14*86400000], sunLog:[now - 5*86400000], pruneLog:[],
-        chat:[{from:'plant', text:'咳咳…主人我快渴坏了，能不能给我来点水？🌵', ts:now-7200000}],
-        health:62, sick:false, blooming:false, sleeping:false, lastLine:'咳咳…主人我快渴坏了'
-    });
-    // 3) 月季·粉粉（女声高亢，正在开花）→ 适合演示"开花状态+拍照体检"
-    plants.push({
-        id:'p_demo_3', name:'粉粉', species:'月季',
-        photo:null, addedAt: now - 20*86400000,
-        waterLog:[now - 2*86400000], sunLog:[now - 1*86400000], pruneLog:[now - 6*86400000],
-        chat:[{from:'plant', text:'哇~主人主人！我今天开花啦！快来看看我！🌸✨', ts:now-1800000}],
-        health:95, sick:false, blooming:true, sleeping:false, lastLine:'哇~主人主人！我今天开花啦！'
-    });
-    save(STORE.plants, plants);
-    save(STORE.diary, diary);
-    // 开启所有智能设置
-    settings.aiEnabled = true;
-    settings.autoSpeak = true;
-    settings.emailReminder = true;
-    settings.email = 'demo@zhiyu.example';
-    settings.proactiveChat = true;
-    settings.reminderScenes = {...DEFAULT_SCENES};
-    // 默认全场景都开
-    Object.keys(settings.reminderScenes).forEach(k=>settings.reminderScenes[k]=true);
-    save(STORE.settings, settings);
-    // 解锁演示相关成就
-    unlockAchv('first_plant');
-    // 关掉 onboarding 引导（演示模式用户不需要再看）
-    try{ localStorage.setItem('zhiyu_onboarded', '1'); }catch(e){}
-    const om = document.getElementById('onboardingModal');
-    if(om) om.classList.remove('show');
-    // 跳到第一盆植物详情 + 滚到顶部
-    renderPlants();
-    renderDiary();
-    renderAchievements();
-    showToast('🎬 演示模式已就绪！3 盆植物 + AI + 朗读 + 邮件已全部开启', 'success');
-    setTimeout(()=>{
-        showView('list');
-        setTimeout(()=>{
-            openDetail('p_demo_1');
-            window.scrollTo({top:0, behavior:'smooth'});
-        }, 300);
-    }, 400);
 }
 
 /* ===== 21. 初始化 ===== */
