@@ -1299,7 +1299,7 @@ a{color:inherit;text-decoration:none}
 /* ===== 1. 配置区 ===== */
 // API 中转代理地址：通过 Vercel Serverless Function 转发，前端不再含任何明文密钥
 // Vercel 国内访问稳定，无 workers.dev 的间歇性屏蔽问题
-const API_BASE = 'https://vercel-pi-six-85.vercel.app';
+const API_BASE = 'https://panthealing-wmheipfl.edgeone.dev';
 const EMAILJS_CONFIG = { /* 已走代理，前端不再暴露 serviceId/templateId */ };
 /*
   EmailJS 后台模板配置示例（变量用 {{}} 包裹）：
@@ -1464,7 +1464,7 @@ const STORE = {
     location:      'zhiyu_location'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.9.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 设备指纹：取相对稳定的浏览器特征组合，用于"版本+设备"双绑定
