@@ -1821,16 +1821,34 @@ async function callAI(plant, userText){
         max_tokens: 500,
         top_p: 0.9
     };
-    const response = await fetch(targetUrl, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(body)
-    });
-    
-    if(!response.ok){
-        throw new Error('API请求失败: ' + response.status);
+
+    // 国内访问 workers.dev 可能间歇性超时，用 AbortController 控制单次超时 + 多次重试
+    // 单次 15 秒超时（避免浏览器等到 60s 才报 ERR_CONNECTION_TIMED_OUT），最多重试 3 次
+    const MAX_RETRY = useProxy ? 3 : 1;
+    let response = null;
+    let lastErr = null;
+    for(let attempt = 1; attempt <= MAX_RETRY; attempt++){
+        try{
+            const controller = new AbortController();
+            const timer = setTimeout(()=>controller.abort(), 15000);
+            response = await fetch(targetUrl, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+            clearTimeout(timer);
+            if(response.ok) break; // 成功就跳出重试循环
+        }catch(e){
+            lastErr = e;
+            // 还没到最大次数，等 500ms 再试
+            if(attempt < MAX_RETRY){ await new Promise(r=>setTimeout(r, 500)); }
+        }
     }
-    
+    if(!response || !response.ok){
+        throw new Error('代理连接失败（重试'+MAX_RETRY+'次仍超时）：' + (lastErr ? lastErr.message : (response ? response.status : '无响应')));
+    }
+
     const data = await response.json();
     if(data.choices && data.choices[0] && data.choices[0].message){
         return data.choices[0].message.content.trim();
@@ -2641,31 +2659,38 @@ async function sendEmail(toEmail, subject, plantName, message){
         showToast(`📨 邮件提醒已记录（部署代理后可真实发送到 ${toEmail}）`);
         return false;
     }
-    try{
-        const resp = await fetch(API_BASE + '/email/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                to_email: toEmail,
-                subject: subject,
-                plant_name: plantName,
-                message: message,
-                time: new Date().toLocaleString('zh-CN')
-            })
-        });
-        if(resp.ok){
-            showToast(`✉️ 邮件已发送到 ${toEmail}`);
-            return true;
-        } else {
-            console.error('邮件代理返回失败:', resp.status);
-            showToast(`📨 邮件已触发（本地记录），代理返回 ${resp.status}`);
-            return false;
+    const payload = {
+        to_email: toEmail,
+        subject: subject,
+        plant_name: plantName,
+        message: message,
+        time: new Date().toLocaleString('zh-CN')
+    };
+    // 国内访问 workers.dev 可能间歇性超时，重试 3 次
+    const MAX_RETRY = 3;
+    for(let attempt = 1; attempt <= MAX_RETRY; attempt++){
+        try{
+            const controller = new AbortController();
+            const timer = setTimeout(()=>controller.abort(), 15000);
+            const resp = await fetch(API_BASE + '/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timer);
+            if(resp.ok){
+                showToast(`✉️ 邮件已发送到 ${toEmail}`);
+                return true;
+            }
+            // 非 2xx 不重试（除 5xx 外多半是参数问题）
+            if(resp.status < 500){ showToast(`📨 邮件发送失败（${resp.status}）`, 'warn'); return false; }
+        }catch(e){
+            if(attempt < MAX_RETRY){ await new Promise(r=>setTimeout(r, 500)); }
+            else { console.error('邮件发送异常:', e); showToast(`📨 邮件发送超时（重试 ${MAX_RETRY} 次仍失败）`); return false; }
         }
-    }catch(err){
-        console.error('邮件发送异常:', err);
-        showToast(`📨 邮件已触发（本地记录），网络异常`);
-        return false;
     }
+    return false;
 }
 async function sendTestEmail(){
     const email = document.getElementById('emailInput').value.trim();
