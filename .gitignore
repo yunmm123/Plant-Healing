@@ -1,7 +1,7 @@
+cloudflared
+package.json
+package-lock.json
 node_modules/
-*.tar.gz
-tunnel*.js
-tunnel*.py
-deploy_tunnel.js
-create_tunnel.js
-ngrok_tunnel.py
+/tmp/
+*.log
+.DS_Store
