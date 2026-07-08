@@ -1860,18 +1860,22 @@ async function sendMessage(){
     
     // 优先使用AI（有用户自己的Key直连，否则走代理），失败则用本地话术
     let reply = '';
+    let usedFallback = false;
     try {
         if(settings.aiEnabled){
             reply = await callAI(p, text);
         } else {
-            // 本地话术 fallback
+            // AI 开关关了，直接本地话术
             await new Promise(r=>setTimeout(r, 600 + Math.random()*400));
             reply = generateReply(p, text);
         }
     } catch(err){
         console.warn('AI调用失败，使用本地话术:', err);
+        usedFallback = true;
         await new Promise(r=>setTimeout(r, 300));
         reply = generateReply(p, text);
+        // 明确告知用户是 AI 临时不可用，避免误以为 AI 变傻
+        reply = `（AI 暂时连不上，先用本地话术回复）\n${reply}`;
     }
     
     const typingEl = document.getElementById('typingIndicator');

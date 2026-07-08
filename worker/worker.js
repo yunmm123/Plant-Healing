@@ -1,86 +1,166 @@
 /**
  * 植愈 · API 中转代理
  * 部署到 Cloudflare Worker，保护前端明文密钥
- *
- * 该 Worker 接收前端请求，在服务端补上密钥后转发到智谱 AI / EmailJS。
- * 前端代码不再含任何明文 Key，F12 看不到。
- *
- * 部署后将本文件部署到 Cloudflare Worker，把得到的地址
- * （形如 https://zhiyu-proxy.your-name.workers.dev）填到前端
- * 的 API_BASE 变量即可。
  */
 
-// ========== 在这里填你的密钥（只有 Worker 能看到，前端拿不到）==========
+// ========== 密钥（只有 Worker 能看到，前端拿不到）==========
 const AI_API_KEY = '6c79eb5b51884d4a9661de32564482db.92iWMe9g8yak4GoY';
 const EMAILJS_PUBLIC_KEY = 'zt1HYl6awhYfxCyXe';
 const EMAILJS_SERVICE_ID = 'service_aao91am';
 const EMAILJS_TEMPLATE_ID = 'template_4vrhi24';
 // ================================================================
 
-// 简单访问频控（防止恶意刷量）：每个 IP 每分钟最多 30 次
-const RATE_LIMIT = 30;
-const RATE_WINDOW = 60; // 秒
+const AI_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+
+// 带超时的 fetch，避免智谱 API 慢时 Worker 一直挂起
+function fetchWithTimeout(url, opts, timeoutMs){
+    return Promise.race([
+        fetch(url, opts),
+        new Promise((_, reject)=>{
+            setTimeout(()=>reject(new Error('请求超时（'+timeoutMs+'ms）')), timeoutMs);
+        })
+    ]);
+}
 
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
         const corsHeaders = {
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type'
         };
-        // 处理预检请求
         if(request.method === 'OPTIONS'){
             return new Response(null, { headers: corsHeaders });
         }
 
-        // 简易频控（基于 Cloudflare 提供的 IP）
-        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-        const cacheKey = 'rate_' + ip;
-        let count = parseInt(await env.PROXY_KV?.get(cacheKey) || '0', 10);
-        if(count >= RATE_LIMIT){
-            return new Response(JSON.stringify({ error: '请求太频繁，请稍后再试' }), {
-                status: 429, headers: { 'Content-Type': 'application/json', ...corsHeaders }
-            });
-        }
-        try{ env.PROXY_KV?.put(cacheKey, String(count + 1), { expirationTtl: RATE_WINDOW }); }catch(e){}
-
-        // ============ 1. AI 对话代理：/ai/chat ============
-        if(url.pathname === '/ai/chat' && request.method === 'POST'){
+        // ============ 0. 健康检查端点：GET /test ============
+        // 用于快速验证 Worker 是否在线、密钥是否有效
+        if(url.pathname === '/test' && request.method === 'GET'){
             try{
-                const body = await request.json();
-                const resp = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+                const resp = await fetchWithTimeout(AI_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + AI_API_KEY
                     },
                     body: JSON.stringify({
-                        model: body.model || 'glm-4-flash',
-                        messages: body.messages,
-                        temperature: body.temperature ?? 0.85,
-                        max_tokens: body.max_tokens ?? 200,
-                        top_p: body.top_p ?? 0.9
+                        model: 'glm-4-flash',
+                        messages: [{ role:'user', content:'你好' }],
+                        max_tokens: 20
                     })
-                });
+                }, 15000);
                 const data = await resp.json();
-                return new Response(JSON.stringify(data), {
-                    status: resp.status,
+                const aiOk = !!(data.choices && data.choices[0]);
+                return new Response(JSON.stringify({
+                    worker: 'online',
+                    ai_reachable: aiOk,
+                    ai_status: resp.status,
+                    ai_reply: aiOk ? data.choices[0].message.content : null,
+                    error: data.error ? JSON.stringify(data.error) : null
+                }, null, 2), {
+                    status: 200,
                     headers: { 'Content-Type': 'application/json', ...corsHeaders }
                 });
             }catch(e){
-                return new Response(JSON.stringify({ error: 'AI 代理错误: ' + e.message }), {
+                return new Response(JSON.stringify({
+                    worker: 'online',
+                    ai_reachable: false,
+                    error: e.message
+                }, null, 2), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+                });
+            }
+        }
+
+        // ============ 1. AI 对话代理：POST /ai/chat ============
+        if(url.pathname === '/ai/chat' && request.method === 'POST'){
+            try{
+                const body = await request.json();
+                // 校验 messages 必须存在且是数组
+                if(!body.messages || !Array.isArray(body.messages) || body.messages.length === 0){
+                    return new Response(JSON.stringify({ error: 'messages 字段缺失或非数组' }), {
+                        status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders }
+                    });
+                }
+                // 构造转发体：严格透传 messages，其余参数用前端值或默认值
+                const forwardBody = {
+                    model: body.model || 'glm-4-flash',
+                    messages: body.messages,
+                    temperature: typeof body.temperature === 'number' ? body.temperature : 0.85,
+                    max_tokens: typeof body.max_tokens === 'number' ? body.max_tokens : 500,
+                    top_p: typeof body.top_p === 'number' ? body.top_p : 0.9
+                };
+                // 第一次尝试，超时 25 秒
+                let resp;
+                try{
+                    resp = await fetchWithTimeout(AI_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + AI_API_KEY
+                        },
+                        body: JSON.stringify(forwardBody)
+                    }, 25000);
+                }catch(timeoutErr){
+                    // 第一次超时，重试一次
+                    console.log('AI 第一次请求超时，重试中...');
+                    try{
+                        resp = await fetchWithTimeout(AI_URL, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + AI_API_KEY
+                            },
+                            body: JSON.stringify(forwardBody)
+                        }, 25000);
+                    }catch(retryErr){
+                        return new Response(JSON.stringify({
+                            error: 'AI 服务连接失败（重试后仍超时）',
+                            detail: retryErr.message
+                        }), {
+                            status: 502, headers: { 'Content-Type': 'application/json', ...corsHeaders }
+                        });
+                    }
+                }
+                // 读取响应
+                const respText = await resp.text();
+                // 尝试解析为 JSON，解析失败就把原文返回（智谱偶尔返回非 JSON）
+                let data;
+                try{ data = JSON.parse(respText); }
+                catch(e){ data = { raw: respText }; }
+                // 如果智谱返回错误，带上原始状态码和错误体
+                if(!resp.ok){
+                    return new Response(JSON.stringify({
+                        error: '智谱 API 返回错误',
+                        status: resp.status,
+                        detail: data
+                    }), {
+                        status: resp.status,
+                        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+                    });
+                }
+                return new Response(JSON.stringify(data), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+                });
+            }catch(e){
+                return new Response(JSON.stringify({
+                    error: 'AI 代理内部错误',
+                    detail: e.message,
+                    stack: e.stack
+                }), {
                     status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders }
                 });
             }
         }
 
-        // ============ 2. EmailJS 邮件代理：/email/send ============
+        // ============ 2. EmailJS 邮件代理：POST /email/send ============
         if(url.pathname === '/email/send' && request.method === 'POST'){
             try{
                 const body = await request.json();
-                // 调用 EmailJS HTTP API（不依赖前端 SDK，密钥在服务端）
-                const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                const resp = await fetchWithTimeout('https://api.emailjs.com/api/v1.0/email/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -95,7 +175,7 @@ export default {
                             time: body.time || new Date().toLocaleString('zh-CN')
                         }
                     })
-                });
+                }, 15000);
                 const text = await resp.text();
                 return new Response(text, {
                     status: resp.status,
@@ -109,7 +189,11 @@ export default {
         }
 
         // 未知路由
-        return new Response(JSON.stringify({ error: 'Not Found', path: url.pathname }), {
+        return new Response(JSON.stringify({
+            error: 'Not Found',
+            path: url.pathname,
+            hint: '可用端点: GET /test, POST /ai/chat, POST /email/send'
+        }), {
             status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders }
         });
     }
