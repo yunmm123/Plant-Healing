@@ -1654,18 +1654,14 @@ function getDeviceFingerprint(){
     for(let i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h |= 0; }
     return 'd' + (h>>>0).toString(36);
 }
-// 版本+设备双校验：版本或设备任一不一致，都清除所有旧数据
-// 这样换版本、换设备、换浏览器都能保证从干净状态启动，避免脏数据残留
+// 版本+设备双校验：记录当前版本戳，用于检测版本/设备变化
+// 注意：不再暴力清空用户数据（植物/日记/成就等），避免每次发版让用户/评委丢失已养护的植物
+// 数据兼容性靠下方各处的"老用户迁移"（缺字段补默认值）保证
 (function checkVersion(){
     const stamp = APP_VERSION + '@' + getDeviceFingerprint();
     const savedStamp = localStorage.getItem(STORE.version);
     if(savedStamp !== stamp){
-        Object.values(STORE).forEach(k => { if(k !== STORE.version) localStorage.removeItem(k); });
-        // 同步清理非 STORE 管理的标志位（版本升级后重新播种 + 重新弹引导）
-        localStorage.removeItem('zhiyu_seeded');
-        localStorage.removeItem('zhiyu_onboarded');
         localStorage.setItem(STORE.version, stamp);
-        console.log('数据已重置（版本/设备变化）:', stamp);
     }
 })();
 
@@ -1831,6 +1827,8 @@ function openDetail(id){
 }
 
 // 渲染天气条初始内容：有缓存直接显示，无缓存显示"点击获取"按钮（避免首次进详情弹定位授权）
+// 注意：本函数在 openDetail 拼 HTML 字符串阶段被调用，此时 #tempDisplay 尚未写入 DOM，
+// 故温度数值由模板里的 getTempNow() 兜底，这里不再尝试更新 tempDisplay
 function getWeatherBarInitialHTML(){
     const cached = load(STORE.weather, null);
     if(cached && (Date.now() - cached.ts) < 3*3600000){
@@ -1844,9 +1842,6 @@ function getWeatherBarInitialHTML(){
             <span>🌬️ 风速 ${cached.wind||'-'}km/h</span>
             <span>体感 ${cached.feelsLike||'-'}°C</span>
         </div>` : '';
-        // 同步更新温度数值（如果在详情页）
-        const td = document.getElementById('tempDisplay');
-        if(td) td.textContent = cached.temp + '°C';
         return `<span class="weather-ic">${wIcon}</span><span class="weather-text">${wDesc} ${cached.temp}°C${wCity}${wExtra}</span>`;
     }
     // 无缓存：显示按钮，用户主动点击才触发定位+拉取
@@ -4222,7 +4217,7 @@ document.addEventListener('DOMContentLoaded', init);
 /* ===== Service Worker 基础结构（注释说明，离线可用） =====
    生产环境可将以下代码注册为 SW：
    if('serviceWorker' in navigator){
-       navigator.serviceWorker.register('sw.js').then(()=>console.log('SW 已注册'));
+       navigator.serviceWorker.register('sw.js');
    }
    sw.js 内容示意：
    const CACHE = 'zhiyu-v1';
