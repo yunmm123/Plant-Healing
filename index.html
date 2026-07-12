@@ -1733,7 +1733,7 @@ const STORE = {
     diagnose:      'zhiyu_diagnose'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '3.5.0';
+const APP_VERSION = '3.5.1';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 设备指纹：取相对稳定的浏览器特征组合，用于"版本+设备"双绑定
@@ -2296,7 +2296,7 @@ function _pickVoice(gender){
 function _cleanTextForSpeech(text){
     return text
         .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}]/gu, '') // emoji & 符号
-        .replace(/[\(（]AI[^)）]*[\)）]/g, '')        // "(AI 暂时连不上…)" 这种提示语，兼容中英文括号
+        .replace(/[\(（]AI[^)）]*[\)）]/g, '')        // "(我有点走神了…)" 这种括号提示语，兼容中英文括号
         .replace(/[\r\n]+/g, '，')                     // 换行转停顿
         .replace(/\s+/g, ' ')
         .trim();
@@ -2404,8 +2404,8 @@ async function sendMessage(){
         usedFallback = true;
         await new Promise(r=>setTimeout(r, 300));
         reply = generateReply(p, text);
-        // 明确告知用户是 AI 临时不可用，避免误以为 AI 变傻
-        reply = `（AI 暂时连不上，先用本地话术回复）\n${reply}`;
+        // 用植物口吻提示，保持人设不破
+        reply = `（我有点走神了，刚才那句话是我想了想才说出来的…）\n${reply}`;
     }
     
     const typingEl = document.getElementById('typingIndicator');
@@ -2860,9 +2860,9 @@ async function runDiagnose(imageDataUrl, followUpQuestion, prevPhotoData){
     }catch(err){
         console.error('AI 体检失败:', err);
         box.innerHTML = `<div class="diagnose-card">
-            <div class="dc-head"><span class="badge" style="background:#ef4444">❌ 体检失败</span><span class="ts">${new Date().toLocaleString('zh-CN')}</span></div>
+            <div class="dc-head"><span class="badge" style="background:#ef4444">🥺 没看清</span><span class="ts">${new Date().toLocaleString('zh-CN')}</span></div>
             <img class="dc-photo" src="${photo}">
-            <div class="dc-reply">主人，我刚想看自己的样子，但好像没看清…（${err.message}）<br>可以再拍一次试试。</div>
+            <div class="dc-reply">主人…我刚才眯着眼看了半天，好像没看清自己的叶子呢 😣<br>可能是光线太暗、或者我有点走神了，再给我拍一次好不好？光线亮一点我会看得更清楚哦~ 📷</div>
             <div class="dc-actions"><button onclick="startDiagnose()">📷 再拍一次</button></div>
         </div>`;
     }
@@ -4098,24 +4098,40 @@ function seedSampleData(){
     if(seeded) return;
     localStorage.setItem('zhiyu_seeded', '1');
     const now = Date.now();
-    // 示例 1：开心的绿萝（刚浇过水）
+    // 示例 1：开心的绿萝（刚浇过水，健康）
     plants.push({
         id:'p_sample_1', name:'小绿', species:'绿萝',
         photo:null, addedAt: now - 5*86400000,
         waterLog:[now - 1*86400000], sunLog:[now - 2*86400000], pruneLog:[],
         chat:[], health:90, sick:false, blooming:false, sleeping:false, lastLine:null
     });
-    // 示例 2：渴了很久的仙人掌
+    // 示例 2：渴了的仙人掌（缺水状态，展示"渴了"情绪表情）
     plants.push({
         id:'p_sample_2', name:'刺刺', species:'仙人掌',
         photo:null, addedAt: now - 12*86400000,
         waterLog:[now - 15*86400000], sunLog:[now - 4*86400000], pruneLog:[],
         chat:[], health:75, sick:false, blooming:false, sleeping:false, lastLine:null
     });
-    // 预置日记
+    // 示例 3：开花中的月季（展示"开花"情绪表情 + 庆祝感）
+    plants.push({
+        id:'p_sample_3', name:'月月', species:'月季',
+        photo:null, addedAt: now - 20*86400000,
+        waterLog:[now - 2*86400000], sunLog:[now - 1*86400000, now - 3*86400000], pruneLog:[now - 7*86400000],
+        chat:[], health:95, sick:false, blooming:true, sleeping:false, lastLine:null
+    });
+    // 示例 4：生病的薄荷（展示"生病"情绪表情，让评委看到状态差异）
+    plants.push({
+        id:'p_sample_4', name:'凉凉', species:'薄荷',
+        photo:null, addedAt: now - 8*86400000,
+        waterLog:[now - 6*86400000], sunLog:[], pruneLog:[],
+        chat:[], health:35, sick:true, blooming:false, sleeping:false, lastLine:null
+    });
+    // 预置日记（覆盖多株植物，让日记页和统计条更丰富）
     diary.unshift(
-        { id:'d_s1', plantId:'p_sample_1', plantName:'小绿', species:'绿萝', date:'7月2日', ts:now-3*86400000, text:'7月2日：今天主人给我浇了水，喝饱饱的好开心~我偷偷长了一片新叶子！', type:'water', auto:true },
-        { id:'d_s2', plantId:'p_sample_1', plantName:'小绿', species:'绿萝', date:'6月30日', ts:now-5*86400000, text:'6月30日：刚来到这个家，主人给我起了名字叫小绿，我喜欢这个名字🌿', type:'manual', auto:false }
+        { id:'d_s1', plantId:'p_sample_1', plantName:'小绿', species:'绿萝', date:'7月6日', ts:now-1*86400000, text:'小绿今天又长了一片新叶子，翠绿翠绿的，开心~', type:'water', auto:true },
+        { id:'d_s2', plantId:'p_sample_1', plantName:'小绿', species:'绿萝', date:'7月2日', ts:now-5*86400000, text:'刚来到这个家，主人给我起了名字叫小绿，我喜欢这个名字🌿', type:'manual', auto:false },
+        { id:'d_s3', plantId:'p_sample_3', plantName:'月月', species:'月季', date:'7月5日', ts:now-2*86400000, text:'月月今天开花了！粉色的花瓣好漂亮，她已经等这一天好久了🌸', type:'manual', auto:false },
+        { id:'d_s4', plantId:'p_sample_4', plantName:'凉凉', species:'薄荷', date:'7月4日', ts:now-3*86400000, text:'凉凉最近叶子有点发黄，主人说要多观察几天，希望能快点好起来', type:'manual', auto:false }
     );
     save(STORE.plants, plants);
     save(STORE.diary, diary);
