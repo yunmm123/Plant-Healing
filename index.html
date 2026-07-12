@@ -40,13 +40,39 @@
   --ease-bounce:cubic-bezier(.34,1.56,.64,1);
   --font-display:"SF Pro Display","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
   --font-body:"SF Pro Text","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  /* 暗黑模式色板（由 [data-theme="dark"] 覆盖具体语义变量） */
+  --bg:#fefce8;          /* 页面背景 */
+  --surface:#ffffff;     /* 卡片/模态背景 */
+  --surface-2:#fafaf9;   /* 次级表面 */
+  --text:#292524;        /* 主文字 */
+  --text-soft:#57534e;   /* 次级文字 */
+  --text-mute:#78716c;   /* 弱化文字 */
+  --border:#e7e5e4;      /* 边框 */
+  --nav-bg:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.85);
+  --glass-r:255;--glass-g:255;--glass-b:255; /* 半透明玻璃底色 RGB */
+}
+/* 暗黑模式：覆盖语义变量，整站自动跟随 */
+[data-theme="dark"]{
+  --bg:#15110d;
+  --surface:#211b15;
+  --surface-2:#1a1510;
+  --text:#f5f5f4;
+  --text-soft:#d6d3d1;
+  --text-mute:#a8a29e;
+  --border:#3a322a;
+  --nav-bg:rgba(21,17,13,.85);
+  --glass-r:33;--glass-g:27;--glass-b:21; /* 暗色玻璃底 */
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3);
+  --shadow-md:0 8px 24px rgba(0,0,0,.4);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.5);
+  --shadow-xl:0 24px 64px rgba(0,0,0,.6);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:80px}
 body{
   font-family:var(--font-body);
-  color:var(--stone-800);
-  background:var(--cream);
+  color:var(--text);
+  background:var(--bg);
   line-height:1.7;
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
@@ -59,7 +85,7 @@ body::before{
     radial-gradient(ellipse 600px 400px at 10% 5%,rgba(34,197,94,.12),transparent),
     radial-gradient(ellipse 500px 350px at 90% 10%,rgba(251,191,36,.08),transparent),
     radial-gradient(ellipse 400px 300px at 50% 95%,rgba(244,114,182,.06),transparent),
-    linear-gradient(180deg,var(--cream) 0%,var(--green-50) 100%);
+    linear-gradient(180deg,var(--bg) 0%,var(--surface-2) 100%);
 }
 body::after{
   content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.35;
@@ -80,11 +106,11 @@ a{color:inherit;text-decoration:none}
   font-weight:900;color:var(--green-950);
   letter-spacing:-.03em;line-height:1.2;
 }
-.section-sub{color:var(--stone-500);margin-top:.6rem;font-size:1.05rem;max-width:56ch;line-height:1.7}
+.section-sub{color:var(--text-mute);margin-top:.6rem;font-size:1.05rem;max-width:56ch;line-height:1.7}
 .eyebrow{
   display:inline-flex;align-items:center;gap:.45rem;
   padding:.4rem 1rem;border-radius:999px;
-  background:rgba(255,255,255,.8);backdrop-filter:blur(8px);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.8);backdrop-filter:blur(8px);
   color:var(--green-700);font-size:.82rem;font-weight:700;
   border:1px solid var(--green-100);
   box-shadow:var(--shadow-xs);
@@ -96,8 +122,8 @@ a{color:inherit;text-decoration:none}
   transition:transform .5s var(--ease),background .4s,box-shadow .4s;
   backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
-  background:rgba(254,252,232,.78);
-  border-bottom:1px solid rgba(187,247,208,.5);
+  background:var(--nav-bg);
+  border-bottom:1px solid var(--border);
 }
 .nav.scrolled{box-shadow:0 1px 12px rgba(20,83,45,.06)}
 .nav.hide{transform:translateY(-100%)}
@@ -106,7 +132,7 @@ a{color:inherit;text-decoration:none}
 .logo-leaf{font-size:1.6rem;display:inline-block;animation:leafSway 4s ease-in-out infinite}
 .nav-links{display:flex;align-items:center;gap:.25rem}
 .nav-links a{
-  padding:.5rem 1rem;border-radius:999px;font-size:.9rem;font-weight:600;color:var(--stone-700);
+  padding:.5rem 1rem;border-radius:999px;font-size:.9rem;font-weight:600;color:var(--text);
   transition:all .25s var(--ease);
 }
 .nav-links a:hover{background:var(--green-50);color:var(--green-800)}
@@ -120,9 +146,36 @@ a{color:inherit;text-decoration:none}
 .nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(21,128,61,.4)}
 .nav-cta:active{transform:scale(.96)}
 .nav-toggle{display:none;font-size:1.5rem;padding:.5rem;line-height:1}
+.theme-toggle{
+  width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  font-size:1.15rem;background:var(--surface-2);border:1px solid var(--border);
+  cursor:pointer;transition:all .25s var(--ease);line-height:1;
+}
+.theme-toggle:hover{transform:rotate(20deg) scale(1.08);border-color:var(--green-400)}
 @media(max-width:780px){
   .nav-links{display:none}
   .nav-toggle{display:block}
+  .theme-toggle{display:none}
+}
+
+/* 首页陪伴数据总览 */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;
+  padding:1.4rem 1.6rem;margin:0 auto 2rem;max-width:880px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);
+  box-shadow:var(--shadow-sm);
+}
+.stats-bar .stat{text-align:center}
+.stats-bar .stat .num{
+  font-family:var(--font-display);font-size:2rem;font-weight:900;
+  background:linear-gradient(135deg,var(--green-600),var(--green-800));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  line-height:1.1;
+}
+.stats-bar .stat .label{font-size:.78rem;color:var(--text-mute);margin-top:.2rem;font-weight:600}
+@media(max-width:560px){
+  .stats-bar{grid-template-columns:repeat(2,1fr);gap:1.2rem .8rem;padding:1.2rem 1rem}
+  .stats-bar .stat .num{font-size:1.6rem}
 }
 
 /* 移动端菜单 */
@@ -155,7 +208,7 @@ a{color:inherit;text-decoration:none}
 .hero-badge{
   display:inline-flex;align-items:center;gap:.5rem;
   padding:.5rem 1.1rem;border-radius:999px;
-  background:rgba(255,255,255,.75);backdrop-filter:blur(10px);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.75);backdrop-filter:blur(10px);
   border:1px solid var(--green-100);color:var(--green-700);
   font-weight:700;font-size:.85rem;
   box-shadow:var(--shadow-sm);
@@ -174,7 +227,7 @@ a{color:inherit;text-decoration:none}
   background:linear-gradient(90deg,var(--amber-400),var(--pink-400));
   opacity:.35;border-radius:4px;z-index:-1;
 }
-.hero p.lead{font-size:clamp(1.02rem,2vw,1.2rem);color:var(--stone-600);max-width:48ch;margin-bottom:2.2rem;line-height:1.75}
+.hero p.lead{font-size:clamp(1.02rem,2vw,1.2rem);color:var(--text-soft);max-width:48ch;margin-bottom:2.2rem;line-height:1.75}
 .hero-cta{display:flex;gap:.9rem;flex-wrap:wrap}
 .btn{
   display:inline-flex;align-items:center;gap:.5rem;
@@ -186,7 +239,7 @@ a{color:inherit;text-decoration:none}
 }
 .btn::after{
   content:"";position:absolute;inset:0;border-radius:inherit;
-  background:linear-gradient(135deg,rgba(255,255,255,.2),transparent);
+  background:linear-gradient(135deg,rgba(var(--glass-r),var(--glass-g),var(--glass-b),.2),transparent);
   opacity:0;transition:opacity .25s;
 }
 .btn:hover::after{opacity:1}
@@ -197,10 +250,10 @@ a{color:inherit;text-decoration:none}
 }
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(21,128,61,.4)}
 .btn-ghost{
-  background:rgba(255,255,255,.7);color:var(--green-800);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.7);color:var(--green-800);
   border-color:var(--green-200);backdrop-filter:blur(8px);
 }
-.btn-ghost:hover{background:#fff;border-color:var(--green-300);transform:translateY(-2px)}
+.btn-ghost:hover{background:var(--surface);border-color:var(--green-300);transform:translateY(-2px)}
 .btn-sun{
   background:linear-gradient(135deg,var(--amber-500),#d97706);
   color:#fff;box-shadow:0 8px 24px rgba(217,119,6,.3);
@@ -217,15 +270,15 @@ a{color:inherit;text-decoration:none}
 .scroll-hint{
   position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
   display:flex;flex-direction:column;align-items:center;gap:.5rem;
-  color:var(--stone-400);font-size:.78rem;font-weight:600;
+  color:var(--text-mute);font-size:.78rem;font-weight:600;
   letter-spacing:.05em;
 }
-.scroll-hint .mouse{width:22px;height:34px;border:2px solid var(--stone-300);border-radius:12px;position:relative}
-.scroll-hint .mouse::after{content:"";position:absolute;left:50%;top:6px;transform:translateX(-50%);width:3px;height:6px;background:var(--stone-400);border-radius:2px;animation:wheel 2s infinite}
+.scroll-hint .mouse{width:22px;height:34px;border:2px solid var(--border);border-radius:12px;position:relative}
+.scroll-hint .mouse::after{content:"";position:absolute;left:50%;top:6px;transform:translateX(-50%);width:3px;height:6px;background:var(--text-mute);border-radius:2px;animation:wheel 2s infinite}
 
 /* ===== 4. 通用 Section ===== */
 .card{
-  background:rgba(255,255,255,.82);backdrop-filter:blur(12px);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.82);backdrop-filter:blur(12px);
   border:1px solid var(--green-100);border-radius:var(--r-xl);
   box-shadow:var(--shadow-sm);
   transition:transform .35s var(--ease),box-shadow .35s,border-color .35s;
@@ -245,7 +298,7 @@ a{color:inherit;text-decoration:none}
 /* ===== 5. 植物卡片 ===== */
 .plants-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.6rem}
 .plant-card{
-  background:rgba(255,255,255,.88);backdrop-filter:blur(12px);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.88);backdrop-filter:blur(12px);
   border:1px solid var(--green-100);border-radius:var(--r-xl);
   padding:1.8rem;cursor:pointer;position:relative;overflow:hidden;
   transition:transform .4s var(--ease),box-shadow .4s,border-color .4s;
@@ -260,9 +313,19 @@ a{color:inherit;text-decoration:none}
 .plant-card:hover::before{opacity:1}
 .plant-card:hover .plant-emoji{animation:swayCard 2s ease-in-out infinite}
 .plant-card:active{transform:scale(.98)}
-.plant-emoji{font-size:3.6rem;display:block;line-height:1;margin-bottom:.7rem;transform-origin:50% 80%}
+.plant-emoji{font-size:3.6rem;display:block;line-height:1;margin-bottom:.7rem;transform-origin:50% 80%;position:relative}
+/* 植物情绪表情（叠加在品种 emoji 右下角，反映健康/水分/开花/生病） */
+.mood-emoji{
+  position:absolute;right:-6px;bottom:-4px;font-size:1.3rem;
+  background:var(--surface);border:2px solid var(--border);border-radius:50%;
+  width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+  line-height:1;box-shadow:var(--shadow-sm);
+}
+.mood-emoji.detail{font-size:1.8rem;width:42px;height:42px;right:-10px;bottom:-6px}
+@keyframes moodPop{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.mood-emoji{animation:moodPop .4s var(--ease-bounce)}
 .plant-card .name{font-family:var(--font-display);font-size:1.35rem;font-weight:900;color:var(--green-900)}
-.plant-card .species{color:var(--stone-500);font-size:.88rem;margin-top:.15rem}
+.plant-card .species{color:var(--text-mute);font-size:.88rem;margin-top:.15rem}
 .mood-badge{
   display:inline-flex;align-items:center;gap:.3rem;
   padding:.3rem .8rem;border-radius:999px;
@@ -277,7 +340,7 @@ a{color:inherit;text-decoration:none}
   margin-top:1rem;
   background:var(--green-50);border:1px solid var(--green-100);
   padding:.8rem 1rem;border-radius:16px 16px 16px 5px;
-  font-size:.9rem;color:var(--stone-700);line-height:1.55;
+  font-size:.9rem;color:var(--text);line-height:1.55;
   position:relative;
 }
 .plant-bubble::before{
@@ -286,17 +349,17 @@ a{color:inherit;text-decoration:none}
   border-left:1px solid var(--green-100);border-top:1px solid var(--green-100);
   transform:translateY(-50%) rotate(45deg);
 }
-.companion-days{font-size:.78rem;color:var(--stone-400);margin-top:.8rem;display:flex;align-items:center;gap:.3rem;font-weight:600}
+.companion-days{font-size:.78rem;color:var(--text-mute);margin-top:.8rem;display:flex;align-items:center;gap:.3rem;font-weight:600}
 
 /* 空状态 */
 .empty-state{
   text-align:center;padding:4rem 2rem;
-  background:rgba(255,255,255,.6);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.6);
   border:2px dashed var(--green-200);border-radius:var(--r-xl);
 }
 .empty-state svg{width:140px;height:140px;margin:0 auto 1.2rem}
 .empty-state h3{font-family:var(--font-display);font-size:1.4rem;color:var(--green-900);margin-bottom:.5rem}
-.empty-state p{color:var(--stone-500);margin-bottom:1.6rem;font-size:.95rem}
+.empty-state p{color:var(--text-mute);margin-bottom:1.6rem;font-size:.95rem}
 
 /* ===== 6. 植物详情 ===== */
 .view{display:none}
@@ -305,10 +368,10 @@ a{color:inherit;text-decoration:none}
   display:inline-flex;align-items:center;gap:.4rem;
   color:var(--green-800);font-weight:700;font-size:.92rem;
   margin-bottom:1.6rem;padding:.55rem 1.1rem;border-radius:999px;
-  background:rgba(255,255,255,.8);border:1px solid var(--green-100);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.8);border:1px solid var(--green-100);
   backdrop-filter:blur(8px);transition:all .25s var(--ease);
 }
-.detail-back:hover{background:#fff;transform:translateX(-3px);box-shadow:var(--shadow-sm)}
+.detail-back:hover{background:var(--surface);transform:translateX(-3px);box-shadow:var(--shadow-sm)}
 .detail-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:1.8rem;align-items:start}
 @media(max-width:940px){.detail-grid{grid-template-columns:1fr}}
 .detail-hero{
@@ -321,11 +384,11 @@ a{color:inherit;text-decoration:none}
 .detail-emoji.sway{animation:sway 5s ease-in-out infinite}
 .detail-emoji.droop{animation:droop 4s ease-in-out infinite}
 .detail-name{font-family:var(--font-display);font-size:2rem;font-weight:900;color:var(--green-900);margin-top:.6rem}
-.detail-meta{color:var(--stone-500);font-size:.92rem;margin-top:.3rem}
+.detail-meta{color:var(--text-mute);font-size:.92rem;margin-top:.3rem}
 .detail-mood{margin-top:1rem}
 .status-list{margin-top:1.6rem;text-align:left;display:flex;flex-direction:column;gap:1rem}
 .status-item{display:flex;flex-direction:column;gap:.4rem}
-.status-row{display:flex;justify-content:space-between;align-items:center;font-size:.88rem;font-weight:700;color:var(--stone-700)}
+.status-row{display:flex;justify-content:space-between;align-items:center;font-size:.88rem;font-weight:700;color:var(--text)}
 .status-bar{height:10px;background:var(--green-50);border-radius:999px;overflow:hidden}
 .status-bar .fill{height:100%;border-radius:999px;transition:width 1s var(--ease)}
 .fill-water{background:linear-gradient(90deg,var(--sky-600),var(--sky-400))}
@@ -343,18 +406,27 @@ a{color:inherit;text-decoration:none}
 }
 .weather-bar.loading{opacity:.6}
 .weather-bar .weather-ic{font-size:1.6rem;flex-shrink:0}
-.weather-bar .weather-text{flex:1;color:var(--stone-700);font-weight:600;line-height:1.5}
-.weather-bar .weather-text .city{color:var(--stone-500);font-size:.78rem;font-weight:500;margin-left:.4rem}
-.weather-bar .weather-detail{display:flex;gap:.8rem;font-size:.78rem;color:var(--stone-500);margin-top:.15rem}
+.weather-bar .weather-text{flex:1;color:var(--text);font-weight:600;line-height:1.5}
+.weather-bar .weather-text .city{color:var(--text-mute);font-size:.78rem;font-weight:500;margin-left:.4rem}
+.weather-bar .weather-detail{display:flex;gap:.8rem;font-size:.78rem;color:var(--text-mute);margin-top:.15rem}
 .weather-bar .weather-detail span{display:inline-flex;align-items:center;gap:.2rem}
 .weather-bar.fetched{animation:fadeInUp .5s var(--ease)}
 .weather-bar.error{border-color:rgba(244,63,94,.2);background:rgba(244,63,94,.04)}
 
 .care-actions{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.6rem;justify-content:center;position:relative;z-index:5}
+/* 养护小贴士卡片 */
+.care-tips-card{
+  margin-top:1.2rem;padding:1rem 1.2rem;border-radius:var(--r-md);
+  background:linear-gradient(135deg,rgba(220,252,231,.6),rgba(240,253,244,.4));
+  border:1px dashed var(--green-300);
+}
+.care-tips-card .ct-head{font-weight:800;color:var(--green-800);font-size:.9rem;margin-bottom:.4rem}
+.care-tips-card .ct-body{font-size:.85rem;line-height:1.7;color:var(--text-soft)}
+[data-theme="dark"] .care-tips-card{background:linear-gradient(135deg,rgba(20,83,45,.25),rgba(5,46,22,.15));border-color:var(--green-700)}
 .care-btn{
   flex:1;min-width:90px;padding:.9rem .6rem;border-radius:var(--r-lg);
-  background:#fff;border:1.5px solid var(--green-100);
-  font-weight:700;font-size:.86rem;color:var(--stone-700);
+  background:var(--surface);border:1.5px solid var(--green-100);
+  font-weight:700;font-size:.86rem;color:var(--text);
   transition:all .25s var(--ease);
   display:flex;flex-direction:column;align-items:center;gap:.3rem;
   position:relative;
@@ -375,32 +447,32 @@ a{color:inherit;text-decoration:none}
 .diagnose-card{margin-top:1.2rem;padding:1.1rem 1.3rem;border-radius:var(--r-md);background:linear-gradient(135deg,#ecfdf5,#f0fdfa);border:1px solid #a7f3d0;animation:msgIn .4s var(--ease)}
 .diagnose-card .dc-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;padding-bottom:.6rem;border-bottom:1px dashed #a7f3d0}
 .diagnose-card .dc-head .badge{font-size:.7rem;padding:.2rem .6rem;border-radius:20px;background:#10b981;color:#fff;font-weight:700;letter-spacing:.5px}
-.diagnose-card .dc-head .ts{font-size:.75rem;color:var(--stone-400)}
+.diagnose-card .dc-head .ts{font-size:.75rem;color:var(--text-mute)}
 .diagnose-card .dc-photo{width:100%;max-height:200px;object-fit:cover;border-radius:var(--r-sm);margin-bottom:.7rem}
-.diagnose-card .dc-reply{font-size:.94rem;line-height:1.65;color:var(--stone-700);margin-bottom:.8rem;white-space:pre-wrap}
+.diagnose-card .dc-reply{font-size:.94rem;line-height:1.65;color:var(--text);margin-bottom:.8rem;white-space:pre-wrap}
 .diagnose-card .dc-actions{display:flex;gap:.5rem;flex-wrap:wrap}
-.diagnose-card .dc-actions button{font-size:.8rem;padding:.45rem .85rem;border-radius:10px;border:1px solid var(--green-200);background:#fff;color:var(--green-700);cursor:pointer;transition:all .2s}
+.diagnose-card .dc-actions button{font-size:.8rem;padding:.45rem .85rem;border-radius:10px;border:1px solid var(--green-200);background:var(--surface);color:var(--green-700);cursor:pointer;transition:all .2s}
 .diagnose-card .dc-actions button:hover{background:var(--green-50);border-color:var(--green-400)}
 .diagnose-card .dc-follow{margin-top:.7rem;padding-top:.6rem;border-top:1px dashed #a7f3d0;display:flex;gap:.5rem}
 .diagnose-card .dc-follow input{flex:1;padding:.5rem .75rem;border-radius:10px;border:1px solid var(--green-200);font-size:.85rem}
 .diagnose-card .dc-follow input:focus{outline:none;border-color:var(--green-500)}
 .diagnose-history{margin-top:1rem}
-.diagnose-history h5{font-size:.78rem;color:var(--stone-400);margin-bottom:.5rem;font-weight:600}
-.diagnose-history .dh-item{font-size:.82rem;color:var(--stone-600);padding:.4rem .7rem;background:#f9fafb;border-radius:8px;margin-bottom:.35rem;cursor:pointer;transition:all .2s;border-left:2px solid var(--green-200)}
+.diagnose-history h5{font-size:.78rem;color:var(--text-mute);margin-bottom:.5rem;font-weight:600}
+.diagnose-history .dh-item{font-size:.82rem;color:var(--text-soft);padding:.4rem .7rem;background:#f9fafb;border-radius:8px;margin-bottom:.35rem;cursor:pointer;transition:all .2s;border-left:2px solid var(--green-200)}
 .diagnose-history .dh-item:hover{background:var(--green-50);border-left-color:var(--green-500)}
 
 /* 引导浮层步骤列表 */
 .onboard-steps{display:flex;flex-direction:column;gap:.7rem;text-align:left}
-.onboard-step{display:flex;align-items:center;gap:.85rem;padding:.7rem .9rem;background:#fff;border-radius:var(--r-sm);border:1px solid var(--green-100);transition:all .2s}
+.onboard-step{display:flex;align-items:center;gap:.85rem;padding:.7rem .9rem;background:var(--surface);border-radius:var(--r-sm);border:1px solid var(--green-100);transition:all .2s}
 .onboard-step:hover{border-color:var(--green-300);transform:translateX(3px)}
 .onboard-step .num{width:26px;height:26px;border-radius:50%;background:var(--green-600);color:#fff;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .onboard-step .ic{font-size:1.4rem;flex-shrink:0;width:28px;text-align:center}
-.onboard-step .txt{font-size:.86rem;color:var(--stone-700);line-height:1.45}
+.onboard-step .txt{font-size:.86rem;color:var(--text);line-height:1.45}
 .onboard-step .txt b{color:var(--green-800)}
 
 /* ===== 7. 聊天界面 ===== */
 .chat-box{
-  background:rgba(255,255,255,.9);backdrop-filter:blur(14px);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.9);backdrop-filter:blur(14px);
   border:1px solid var(--green-100);border-radius:var(--r-xl);
   display:flex;flex-direction:column;height:580px;overflow:hidden;
   box-shadow:var(--shadow-sm);
@@ -417,7 +489,7 @@ a{color:inherit;text-decoration:none}
   font-size:1.7rem;flex-shrink:0;
 }
 .chat-header .info h4{font-family:var(--font-display);font-size:1.05rem;font-weight:800;color:var(--green-900)}
-.chat-header .info span{font-size:.78rem;color:var(--stone-400);display:flex;align-items:center;gap:.35rem;font-weight:600}
+.chat-header .info span{font-size:.78rem;color:var(--text-mute);display:flex;align-items:center;gap:.35rem;font-weight:600}
 .chat-header .info span::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green-400);box-shadow:0 0 0 3px rgba(34,197,94,.2)}
 .chat-messages{flex:1;overflow-y:auto;padding:1.4rem;display:flex;flex-direction:column;gap:.9rem;scroll-behavior:smooth}
 .chat-messages::-webkit-scrollbar{width:5px}
@@ -428,19 +500,19 @@ a{color:inherit;text-decoration:none}
   width:36px;height:36px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:1.2rem;flex-shrink:0;
-  background:#fff;border:1.5px solid var(--green-100);
+  background:var(--surface);border:1.5px solid var(--green-100);
 }
 .msg.plant .ava{background:var(--green-50)}
 .msg.user .ava{background:#fef3c7;border-color:#fde68a}
 .msg .bubble{padding:.75rem 1.05rem;border-radius:18px;font-size:.94rem;line-height:1.6}
-.msg.plant .bubble{background:var(--green-50);color:var(--stone-700);border:1px solid var(--green-100);border-bottom-left-radius:5px}
+.msg.plant .bubble{background:var(--green-50);color:var(--text);border:1px solid var(--green-100);border-bottom-left-radius:5px}
 .msg.user .bubble{background:linear-gradient(135deg,var(--green-700),var(--green-800));color:#fff;border-bottom-right-radius:5px}
 /* 朗读按钮：浮在植物消息气泡右下角 */
 .msg.plant{flex-direction:column;align-items:flex-start;gap:.25rem}
 .msg.plant .speak-btn{
   align-self:flex-end;
   background:transparent;border:none;cursor:pointer;
-  font-size:.72rem;color:var(--stone-400);
+  font-size:.72rem;color:var(--text-mute);
   padding:.15rem .5rem;border-radius:10px;
   display:inline-flex;align-items:center;gap:.25rem;
   transition:all .2s;
@@ -460,7 +532,7 @@ a{color:inherit;text-decoration:none}
 .quick-replies{padding:.8rem 1.1rem;border-top:1px solid var(--green-100);display:flex;gap:.45rem;flex-wrap:wrap;background:rgba(254,252,232,.5)}
 .quick-replies button{
   padding:.45rem .9rem;border-radius:999px;
-  background:#fff;border:1.5px solid var(--green-100);
+  background:var(--surface);border:1.5px solid var(--green-100);
   font-size:.82rem;color:var(--green-800);font-weight:600;
   transition:all .2s var(--ease);
 }
@@ -491,7 +563,7 @@ a{color:inherit;text-decoration:none}
 .diary-entry{
   position:relative;margin-bottom:1.6rem;
   padding:1.2rem 1.4rem;
-  background:rgba(255,255,255,.85);border:1px solid var(--green-100);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.85);border:1px solid var(--green-100);
   border-radius:var(--r-lg);box-shadow:var(--shadow-xs);
   transition:transform .3s var(--ease),box-shadow .3s;
 }
@@ -499,20 +571,20 @@ a{color:inherit;text-decoration:none}
 .diary-entry::before{
   content:"";position:absolute;left:-2.2rem;top:1.5rem;
   width:18px;height:18px;border-radius:50%;
-  background:#fff;border:3px solid var(--green-400);
+  background:var(--surface);border:3px solid var(--green-400);
   box-shadow:0 0 0 4px rgba(34,197,94,.12);
 }
 .diary-entry.water::before{border-color:var(--sky-400);box-shadow:0 0 0 4px rgba(56,189,248,.12)}
 .diary-entry.sun::before{border-color:var(--amber-400);box-shadow:0 0 0 4px rgba(251,191,36,.12)}
 .diary-entry.prune::before{border-color:var(--pink-400);box-shadow:0 0 0 4px rgba(244,114,182,.12)}
-.diary-entry .date{font-size:.8rem;color:var(--stone-400);font-weight:700;letter-spacing:.02em}
-.diary-entry .text{margin-top:.4rem;color:var(--stone-700);font-size:.96rem;line-height:1.65}
+.diary-entry .date{font-size:.8rem;color:var(--text-mute);font-weight:700;letter-spacing:.02em}
+.diary-entry .text{margin-top:.4rem;color:var(--text);font-size:.96rem;line-height:1.65}
 .diary-entry .tag{display:inline-block;margin-top:.6rem;padding:.2rem .6rem;border-radius:6px;font-size:.72rem;font-weight:700;background:var(--green-50);color:var(--green-700)}
 
 .achv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:1.1rem}
 .achv{
   padding:1.4rem 1rem;border-radius:var(--r-lg);text-align:center;
-  background:rgba(255,255,255,.6);border:1.5px solid var(--green-100);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.6);border:1.5px solid var(--green-100);
   transition:all .35s var(--ease);position:relative;overflow:hidden;
 }
 .achv.unlocked{
@@ -523,7 +595,7 @@ a{color:inherit;text-decoration:none}
 .achv.locked{opacity:.5;filter:grayscale(.6)}
 .achv .ic{font-size:2.6rem;display:block;line-height:1;margin-bottom:.6rem}
 .achv .title{font-family:var(--font-display);font-weight:800;color:var(--green-900);font-size:.92rem}
-.achv .desc{font-size:.76rem;color:var(--stone-500);margin-top:.25rem;line-height:1.4}
+.achv .desc{font-size:.76rem;color:var(--text-mute);margin-top:.25rem;line-height:1.4}
 
 /* 成就解锁弹层 */
 .achv-celebrate{
@@ -532,55 +604,55 @@ a{color:inherit;text-decoration:none}
 }
 .achv-celebrate.show{display:flex;animation:fadeIn .3s}
 .achv-card{
-  background:#fff;border-radius:var(--r-2xl);padding:2.6rem 2.2rem;text-align:center;
+  background:var(--surface);border-radius:var(--r-2xl);padding:2.6rem 2.2rem;text-align:center;
   max-width:360px;position:relative;animation:popIn .6s var(--ease-bounce);
   box-shadow:0 40px 100px rgba(0,0,0,.3);
 }
 .achv-card .big{font-size:5.5rem;display:block;animation:trophy 2.5s ease infinite}
 .achv-card h3{font-family:var(--font-display);font-size:1.5rem;color:var(--green-900);margin:.6rem 0 .3rem;font-weight:900}
-.achv-card p{color:var(--stone-500);font-size:.95rem;line-height:1.5}
+.achv-card p{color:var(--text-mute);font-size:.95rem;line-height:1.5}
 .confetti{position:absolute;width:8px;height:14px;top:-20px;opacity:0;animation:confetti 2.8s ease-out infinite}
 
 /* ===== 9. 功能卡片 ===== */
 .feature-card{padding:1.8rem}
 .feature-card .ic{font-size:2.2rem;display:inline-block;margin-bottom:.8rem}
 .feature-card h4{font-family:var(--font-display);font-size:1.15rem;font-weight:800;color:var(--green-900);margin-bottom:.5rem}
-.feature-card p{color:var(--stone-600);font-size:.92rem;line-height:1.65}
-.feature-card .num{font-size:.76rem;color:var(--stone-400);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.feature-card p{color:var(--text-soft);font-size:.92rem;line-height:1.65}
+.feature-card .num{font-size:.76rem;color:var(--text-mute);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 
 .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center;margin-top:2.4rem}
 .flow-step{
   flex:1;min-width:140px;
-  background:rgba(255,255,255,.9);border:1px solid var(--green-100);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.9);border:1px solid var(--green-100);
   border-radius:var(--r-lg);padding:1.4rem 1rem;text-align:center;
   transition:transform .3s var(--ease);
 }
 .flow-step:hover{transform:translateY(-3px)}
 .flow-step .ic{font-size:2rem;display:block;margin-bottom:.5rem}
 .flow-step .t{font-weight:800;color:var(--green-900);font-size:.92rem}
-.flow-step .s{font-size:.78rem;color:var(--stone-500);margin-top:.3rem;line-height:1.4}
+.flow-step .s{font-size:.78rem;color:var(--text-mute);margin-top:.3rem;line-height:1.4}
 .flow-arrow{display:flex;align-items:center;color:var(--green-300);font-size:1.6rem;padding:0 .5rem}
 .flow-final{background:linear-gradient(160deg,#fef3c7,var(--green-50));border-color:#fde68a}
 
 /* 提醒设置 */
 .reminder-tabs{display:flex;gap:.35rem;background:var(--green-50);padding:.3rem;border-radius:999px;margin-bottom:1.2rem;width:fit-content}
-.reminder-tabs button{padding:.5rem 1.2rem;border-radius:999px;font-weight:700;font-size:.86rem;color:var(--stone-500);transition:all .25s var(--ease)}
-.reminder-tabs button.active{background:#fff;color:var(--green-800);box-shadow:var(--shadow-xs)}
+.reminder-tabs button{padding:.5rem 1.2rem;border-radius:999px;font-weight:700;font-size:.86rem;color:var(--text-mute);transition:all .25s var(--ease)}
+.reminder-tabs button.active{background:var(--surface);color:var(--green-800);box-shadow:var(--shadow-xs)}
 .reminder-panel{display:none}
 .reminder-panel.active{display:block;animation:fadeIn .3s}
 .field{margin-bottom:1.1rem}
-.field label{display:block;font-weight:700;font-size:.88rem;margin-bottom:.45rem;color:var(--stone-700)}
+.field label{display:block;font-weight:700;font-size:.88rem;margin-bottom:.45rem;color:var(--text)}
 .field input,.field select{
   width:100%;padding:.75rem 1rem;
   border:1.5px solid var(--green-100);border-radius:var(--r-sm);
   outline:none;transition:border-color .2s,box-shadow .2s;
-  background:#fff;font-size:.95rem;
+  background:var(--surface);font-size:.95rem;
 }
 .field input:focus,.field select:focus{border-color:var(--green-300);box-shadow:0 0 0 3px rgba(34,197,94,.1)}
 .switch{display:flex;align-items:center;gap:.8rem;cursor:pointer}
 .switch input{display:none}
-.switch .track{width:48px;height:28px;background:var(--stone-200);border-radius:999px;position:relative;transition:background .3s;flex-shrink:0}
-.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .3s var(--ease);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.switch .track{width:48px;height:28px;background:var(--border);border-radius:999px;position:relative;transition:background .3s;flex-shrink:0}
+.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);transition:transform .3s var(--ease);box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .switch input:checked + .track{background:var(--green-500)}
 .switch input:checked + .track::after{transform:translateX(20px)}
 
@@ -590,13 +662,13 @@ a{color:inherit;text-decoration:none}
   aspect-ratio:1;border-radius:7px;
   background:rgba(187,247,208,.3);
   position:relative;display:flex;align-items:center;justify-content:center;
-  font-size:.62rem;color:var(--stone-400);font-weight:600;
+  font-size:.62rem;color:var(--text-mute);font-weight:600;
   transition:transform .2s;
 }
 .cal-cell:hover{transform:scale(1.15)}
 .cal-cell.today{outline:2px solid var(--green-500);font-weight:800;color:var(--green-700)}
 .cal-cell .dot{position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%}
-.cal-legend{display:flex;gap:1.2rem;margin-top:1rem;font-size:.78rem;color:var(--stone-500);flex-wrap:wrap}
+.cal-legend{display:flex;gap:1.2rem;margin-top:1rem;font-size:.78rem;color:var(--text-mute);flex-wrap:wrap}
 .cal-legend span{display:inline-flex;align-items:center;gap:.35rem;font-weight:600}
 .cal-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
 
@@ -621,10 +693,10 @@ a{color:inherit;text-decoration:none}
 /* ===== 11. Toast / 弹窗 ===== */
 .toast-wrap{position:fixed;top:84px;right:20px;z-index:3000;display:flex;flex-direction:column;gap:.6rem;pointer-events:none;max-width:360px}
 .toast{
-  background:rgba(255,255,255,.96);backdrop-filter:blur(14px);
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.96);backdrop-filter:blur(14px);
   border:1px solid var(--green-100);border-radius:var(--r-md);
   padding:.9rem 1.2rem;box-shadow:var(--shadow-lg);
-  font-size:.9rem;font-weight:600;color:var(--stone-700);
+  font-size:.9rem;font-weight:600;color:var(--text);
   display:flex;align-items:center;gap:.6rem;
   animation:toastIn .45s var(--ease);
   border-left:4px solid var(--green-500);
@@ -640,36 +712,36 @@ a{color:inherit;text-decoration:none}
 }
 .modal.show{display:flex;animation:fadeIn .3s}
 .modal-card{
-  background:var(--cream);border-radius:var(--r-2xl);
+  background:var(--surface);border-radius:var(--r-2xl);
   width:min(540px,100%);max-height:90vh;overflow-y:auto;
   padding:2.2rem;animation:popIn .45s var(--ease-bounce);
   box-shadow:0 40px 100px rgba(0,0,0,.3);
   position:relative;
 }
 .modal-card h3{font-family:var(--font-display);font-size:1.6rem;color:var(--green-900);margin-bottom:.4rem;font-weight:900}
-.modal-card .sub{color:var(--stone-500);font-size:.92rem;margin-bottom:1.6rem;line-height:1.6}
+.modal-card .sub{color:var(--text-mute);font-size:.92rem;margin-bottom:1.6rem;line-height:1.6}
 .modal-close{
   position:absolute;top:1.2rem;right:1.2rem;
   width:38px;height:38px;border-radius:50%;
-  background:rgba(255,255,255,.85);font-size:1.2rem;
+  background:rgba(var(--glass-r),var(--glass-g),var(--glass-b),.85);font-size:1.2rem;
   display:flex;align-items:center;justify-content:center;
   transition:all .25s var(--ease);
   border:1px solid var(--green-100);
 }
-.modal-close:hover{background:#fff;transform:rotate(90deg);box-shadow:var(--shadow-sm)}
+.modal-close:hover{background:var(--surface);transform:rotate(90deg);box-shadow:var(--shadow-sm)}
 .modal-head{margin-bottom:1.6rem}
 .species-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:.7rem;margin:.6rem 0 1.2rem}
 .species-opt{
   position:relative;
   padding:.9rem .6rem;border-radius:var(--r-md);
-  border:2px solid var(--green-100);background:#fff;
+  border:2px solid var(--green-100);background:var(--surface);
   text-align:center;cursor:pointer;transition:all .25s var(--ease);
 }
 .species-opt:hover{border-color:var(--green-300);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
 .species-opt.selected{border-color:var(--green-500);background:var(--green-50);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
 .species-opt .em{font-size:2rem;display:block}
 .species-opt .n{font-size:.84rem;font-weight:800;color:var(--green-900);margin-top:.25rem}
-.species-opt .p{font-size:.7rem;color:var(--stone-400);margin-top:.15rem;line-height:1.3}
+.species-opt .p{font-size:.7rem;color:var(--text-mute);margin-top:.15rem;line-height:1.3}
 .species-del{
   position:absolute;top:-7px;right:-7px;
   width:22px;height:22px;border-radius:50%;
@@ -694,7 +766,7 @@ a{color:inherit;text-decoration:none}
 .custom-species-panel .field-mini input,
 .custom-species-panel .field-mini select{
   width:100%;padding:.55rem .8rem;border:1.5px solid var(--green-100);border-radius:8px;
-  outline:none;background:#fff;font-size:.9rem;transition:border-color .2s;
+  outline:none;background:var(--surface);font-size:.9rem;transition:border-color .2s;
 }
 .custom-species-panel .field-mini input:focus,
 .custom-species-panel .field-mini select:focus{border-color:var(--green-400)}
@@ -702,7 +774,7 @@ a{color:inherit;text-decoration:none}
 .emoji-pick span{
   display:inline-flex;align-items:center;justify-content:center;
   width:38px;height:38px;border-radius:8px;cursor:pointer;
-  border:1.5px solid var(--green-100);background:#fff;font-size:1.3rem;
+  border:1.5px solid var(--green-100);background:var(--surface);font-size:1.3rem;
   transition:all .2s var(--ease);
 }
 .emoji-pick span:hover{border-color:var(--green-300);transform:scale(1.08)}
@@ -711,20 +783,20 @@ a{color:inherit;text-decoration:none}
 .scene-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem;margin-top:.5rem}
 .scene-item{
   display:flex;align-items:center;gap:.7rem;padding:.8rem .9rem;
-  border:1.5px solid var(--green-100);border-radius:var(--r-sm);background:#fff;
+  border:1.5px solid var(--green-100);border-radius:var(--r-sm);background:var(--surface);
   cursor:pointer;transition:all .25s var(--ease);
 }
 .scene-item:hover{border-color:var(--green-300);transform:translateY(-1px);box-shadow:var(--shadow-xs)}
 .scene-item input{margin:0;cursor:pointer;accent-color:var(--green-600);flex-shrink:0;width:16px;height:16px}
 .scene-item .scene-ic{font-size:1.4rem;flex-shrink:0}
 .scene-item .t{font-size:.86rem;font-weight:800;color:var(--green-900);line-height:1.3}
-.scene-item .d{font-size:.72rem;color:var(--stone-400);margin-top:.1rem;line-height:1.3}
+.scene-item .d{font-size:.72rem;color:var(--text-mute);margin-top:.1rem;line-height:1.3}
 .scene-item:has(input:checked){border-color:var(--green-500);background:var(--green-50)}
 .photo-preview{
   margin-top:.6rem;width:100%;height:140px;border-radius:var(--r-md);
   border:2px dashed var(--green-200);background:var(--green-50);
   display:flex;align-items:center;justify-content:center;
-  color:var(--stone-400);font-size:.9rem;overflow:hidden;
+  color:var(--text-mute);font-size:.9rem;overflow:hidden;
   transition:border-color .2s;
 }
 .photo-preview img{width:100%;height:100%;object-fit:cover}
@@ -732,7 +804,7 @@ a{color:inherit;text-decoration:none}
 .radio-opt{
   flex:1;padding:.8rem;border:2px solid var(--green-100);border-radius:var(--r-sm);
   text-align:center;cursor:pointer;font-size:.88rem;font-weight:700;
-  color:var(--stone-600);transition:all .25s var(--ease);
+  color:var(--text-soft);transition:all .25s var(--ease);
 }
 .radio-opt:hover{border-color:var(--green-300)}
 .radio-opt.selected{border-color:var(--green-500);background:var(--green-50);color:var(--green-800)}
@@ -764,8 +836,8 @@ a{color:inherit;text-decoration:none}
 .footer{padding:3.5rem 0 2rem;border-top:1px solid var(--green-100);background:rgba(254,252,232,.5)}
 .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.2rem}
 .footer .logo{font-size:1.15rem}
-.footer .slogan{color:var(--stone-400);font-size:.88rem;font-style:italic;margin-top:.3rem}
-.footer .copy{font-size:.78rem;color:var(--stone-400);margin-top:.5rem;width:100%;text-align:center}
+.footer .slogan{color:var(--text-mute);font-size:.88rem;font-style:italic;margin-top:.3rem}
+.footer .copy{font-size:.78rem;color:var(--text-mute);margin-top:.5rem;width:100%;text-align:center}
 
 /* ===== 动画 ===== */
 @keyframes leafSway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
@@ -809,6 +881,7 @@ a{color:inherit;text-decoration:none}
       <a href="#achv" data-nav>成就</a>
       <a href="#about" data-nav>关于</a>
       <button class="nav-cta" onclick="openAddModal()">+ 添加植物</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题" title="切换深色/浅色">🌙</button>
     </div>
     <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
   </div>
@@ -819,6 +892,7 @@ a{color:inherit;text-decoration:none}
   <a href="#achv" data-nav>🏆 成就</a>
   <a href="#about" data-nav>💚 关于</a>
   <button class="nav-cta" onclick="openAddModal()" style="margin-top:.5rem">+ 添加植物</button>
+  <button class="theme-toggle" onclick="toggleTheme()" style="margin-top:.5rem;width:100%">🌙 切换深色</button>
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -891,6 +965,9 @@ a{color:inherit;text-decoration:none}
     </div>
   </section>
 
+  <!-- 陪伴数据总览 -->
+  <section class="stats-bar reveal" id="statsBar"></section>
+
   <!-- 我的植物 -->
   <section class="section" id="plants">
     <div class="container">
@@ -961,7 +1038,7 @@ a{color:inherit;text-decoration:none}
         <p class="section-sub">每次你浇水、晒太阳，植物都会偷偷记一笔。它也会写自己的心情——你可以加自己的感受。</p>
       </div>
       <div style="margin-bottom:1.6rem;display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">
-        <select id="diaryPlantFilter" onchange="renderDiary()" style="padding:.6rem 1rem;border:1.5px solid var(--green-100);border-radius:999px;background:#fff;font-weight:700;outline:none;font-size:.9rem;color:var(--stone-700)"></select>
+        <select id="diaryPlantFilter" onchange="renderDiary()" style="padding:.6rem 1rem;border:1.5px solid var(--green-100);border-radius:999px;background:var(--surface);font-weight:700;outline:none;font-size:.9rem;color:var(--text)"></select>
         <button class="btn btn-ghost" onclick="openDiaryModal()">️ 写一篇日记</button>
       </div>
       <div class="timeline" id="diaryTimeline"></div>
@@ -987,12 +1064,12 @@ a{color:inherit;text-decoration:none}
         <span class="eyebrow">💚 为什么做植愈</span>
         <h2 class="section-title">从一个植物杀手，到想听懂植物</h2>
       </div>
-      <div class="card reveal" style="padding:2.6rem;max-width:760px;font-size:1.05rem;line-height:1.95;color:var(--stone-700)">
+      <div class="card reveal" style="padding:2.6rem;max-width:760px;font-size:1.05rem;line-height:1.95;color:var(--text)">
         <p>我养死过 7 盆植物。</p>
         <p style="margin-top:1.1rem">最后一盆是一株绿萝。它枯萎那天我才发现——叶子早就耷拉下来了，土干得裂开。它其实在很努力地"喊"我，可我完全看不懂这些信号。我能听懂猫叫、看懂狗摇尾巴，却读不出一片黄叶在说什么。</p>
         <p style="margin-top:1.1rem">那天我突然想：如果植物能说话就好了。如果它能像我家猫一样，饿了来蹭我、渴了能撒娇，我就不会忘记浇水了。</p>
         <p style="margin-top:1.1rem">于是有了<strong style="color:var(--green-800)">植愈</strong>——把植物拟人化，让它们直接"开口"。冷冰冰的"土壤湿度 20%"变成"主人~我渴了🥺"，养花这件事，就变成了养一个会撒娇的小生命。</p>
-        <p style="margin-top:1.1rem;color:var(--stone-400);font-style:italic">照顾它的过程，也是治愈自己的过程。</p>
+        <p style="margin-top:1.1rem;color:var(--text-mute);font-style:italic">照顾它的过程，也是治愈自己的过程。</p>
       </div>
     </div>
   </section>
@@ -1019,7 +1096,10 @@ a{color:inherit;text-decoration:none}
       <div class="cta-section reveal">
         <h2>让植物不再只是装饰</h2>
         <p>添加第一盆植物，听听它今天想对你说什么。</p>
-        <button class="btn btn-sun btn-lg" onclick="openAddModal()">🌱 添加我的第一盆植物</button>
+        <div style="display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-sun btn-lg" onclick="openAddModal()">🌱 添加我的第一盆植物</button>
+          <button class="btn btn-ghost btn-lg" onclick="openReportModal()">📋 生成陪伴报告</button>
+        </div>
       </div>
     </div>
   </section>
@@ -1032,8 +1112,8 @@ a{color:inherit;text-decoration:none}
         <div class="slogan">每一盆植物，都值得被温柔以待。</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:.85rem;color:var(--stone-400)">AI 创造力大赛参赛作品</div>
-        <div style="font-size:.78rem;color:var(--stone-400);margin-top:.2rem">单文件 HTML · 离线可用 · 数据本地存储</div>
+        <div style="font-size:.85rem;color:var(--text-mute)">AI 创造力大赛参赛作品</div>
+        <div style="font-size:.78rem;color:var(--text-mute);margin-top:.2rem">单文件 HTML · 离线可用 · 数据本地存储</div>
       </div>
       <div class="copy">© 2026 植愈 ZhiYu · 用拟人化对话，让每一株植物都被听见</div>
     </div>
@@ -1065,7 +1145,7 @@ a{color:inherit;text-decoration:none}
               <label class="switch" style="margin-bottom:1.1rem">
                 <input type="checkbox" id="emailSwitch" onchange="toggleEmailReminder()">
                 <span class="track"></span>
-                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">开启邮件陪伴（不只是浇水，植物会主动写信给你）</span>
+                <span style="font-weight:700;font-size:.9rem;color:var(--text)">开启邮件陪伴（不只是浇水，植物会主动写信给你）</span>
               </label>
               <div class="field">
                 <label>接收提醒的邮箱</label>
@@ -1086,11 +1166,11 @@ a{color:inherit;text-decoration:none}
               <div class="field">
                 <label>陪伴问候频率（天）</label>
                 <input type="number" id="reminderDays" min="1" max="30" onchange="saveReminderDays()">
-                <p style="font-size:.78rem;color:var(--stone-400);margin-top:.4rem;line-height:1.5">每隔几天，植物会主动写一封"近况信"告诉你它最近怎么样。</p>
+                <p style="font-size:.78rem;color:var(--text-mute);margin-top:.4rem;line-height:1.5">每隔几天，植物会主动写一封"近况信"告诉你它最近怎么样。</p>
               </div>
               <button class="btn btn-ghost" onclick="sendTestEmail()" style="width:100%;justify-content:center">📬 发送测试邮件</button>
               <div style="margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--green-100)">
-                <label style="font-size:.85rem;color:var(--stone-600);font-weight:700;display:block;margin-bottom:.5rem">🧪 评委测试：立即预览各场景邮件</label>
+                <label style="font-size:.85rem;color:var(--text-soft);font-weight:700;display:block;margin-bottom:.5rem">🧪 评委测试：立即预览各场景邮件</label>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
                   <button class="btn btn-ghost" onclick="testEmailScene('companion')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">💌 陪伴问候</button>
                   <button class="btn btn-ghost" onclick="testEmailScene('bloom')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🌸 开花</button>
@@ -1099,21 +1179,21 @@ a{color:inherit;text-decoration:none}
                   <button class="btn btn-ghost" onclick="testEmailScene('festival')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🎉 节日</button>
                   <button class="btn btn-ghost" onclick="testEmailScene('anniversary')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🎂 周年</button>
                 </div>
-                <p style="font-size:.75rem;color:var(--stone-400);margin-top:.5rem;line-height:1.5">点击即触发该场景的邮件发送到你的邮箱，立即看到陪伴效果。</p>
+                <p style="font-size:.75rem;color:var(--text-mute);margin-top:.5rem;line-height:1.5">点击即触发该场景的邮件发送到你的邮箱，立即看到陪伴效果。</p>
               </div>
             </div>
             <div class="reminder-panel" id="tab-push">
               <label class="switch" style="margin-bottom:1.1rem">
                 <input type="checkbox" id="proactiveSwitch" onchange="toggleProactiveChat()">
                 <span class="track"></span>
-                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">开启植物主动聊天（陪伴核心）</span>
+                <span style="font-weight:700;font-size:.9rem;color:var(--text)">开启植物主动聊天（陪伴核心）</span>
               </label>
-              <p style="font-size:.85rem;color:var(--stone-500);margin-bottom:1rem;line-height:1.6">开启后，植物会在你打开应用时主动找你说话——早安/午安/晚安问候、想你、生病求救、开花分享、好久不见想念，让陪伴真的发生。每盆植物每天最多主动发1次。</p>
-              <p style="font-size:.82rem;color:var(--stone-400);margin-bottom:1rem;line-height:1.5">💡 这是植愈的初心功能：植物不只是被动等你来浇水，它会主动表达情绪、找你聊天，让你真正感受到被一盆小生命惦记着。</p>
+              <p style="font-size:.85rem;color:var(--text-mute);margin-bottom:1rem;line-height:1.6">开启后，植物会在你打开应用时主动找你说话——早安/午安/晚安问候、想你、生病求救、开花分享、好久不见想念，让陪伴真的发生。每盆植物每天最多主动发1次。</p>
+              <p style="font-size:.82rem;color:var(--text-mute);margin-bottom:1rem;line-height:1.5">💡 这是植愈的初心功能：植物不只是被动等你来浇水，它会主动表达情绪、找你聊天，让你真正感受到被一盆小生命惦记着。</p>
 
               <div class="field">
                 <label>🧪 体验测试（评委专用）</label>
-                <p style="font-size:.8rem;color:var(--stone-500);margin-bottom:.8rem;line-height:1.6">主动聊天原本需要等6小时才会触发，这里提供即时测试，让你立即看到陪伴效果：</p>
+                <p style="font-size:.8rem;color:var(--text-mute);margin-bottom:.8rem;line-height:1.6">主动聊天原本需要等6小时才会触发，这里提供即时测试，让你立即看到陪伴效果：</p>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
                   <button class="btn btn-ghost" onclick="testProactiveChat('time')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">🌅 按时段问候</button>
                   <button class="btn btn-ghost" onclick="testProactiveChat('companion')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">💚 日常陪伴</button>
@@ -1123,17 +1203,17 @@ a{color:inherit;text-decoration:none}
                   <button class="btn btn-ghost" onclick="testProactiveChat('longNoSee')" style="padding:.6rem .8rem;font-size:.85rem;justify-content:center">想念你</button>
                 </div>
                 <button class="btn btn-primary" onclick="testProactiveChat('all')" style="width:100%;justify-content:center;margin-top:.6rem">✨ 随机来一次主动陪伴</button>
-                <p style="font-size:.75rem;color:var(--stone-400);margin-top:.6rem;line-height:1.5">点击后植物会立即在聊天框里发消息，你可以马上体验陪伴效果，无需等待。</p>
+                <p style="font-size:.75rem;color:var(--text-mute);margin-top:.6rem;line-height:1.5">点击后植物会立即在聊天框里发消息，你可以马上体验陪伴效果，无需等待。</p>
               </div>
 
               <div style="border-top:1px dashed var(--green-100);padding-top:1rem;margin-top:1rem">
-                <p style="font-size:.9rem;color:var(--stone-500);margin-bottom:.8rem;line-height:1.6">🔔 还想收到浏览器系统通知？</p>
+                <p style="font-size:.9rem;color:var(--text-mute);margin-bottom:.8rem;line-height:1.6">🔔 还想收到浏览器系统通知？</p>
                 <button class="btn btn-primary" onclick="enablePush()" style="width:100%;justify-content:center">🔔 开启桌面通知</button>
-                <div id="pushStatus" style="margin-top:.7rem;font-size:.82rem;color:var(--stone-400)"></div>
+                <div id="pushStatus" style="margin-top:.7rem;font-size:.82rem;color:var(--text-mute)"></div>
 
                 <div style="margin-top:1rem;padding-top:.8rem;border-top:1px dashed var(--green-100)">
-                  <label style="font-size:.85rem;color:var(--stone-600);font-weight:700;display:block;margin-bottom:.5rem">🪟 评委测试：模拟最小化时的桌面推送</label>
-                  <p style="font-size:.78rem;color:var(--stone-500);margin-bottom:.7rem;line-height:1.6">开启桌面通知后，<b>最小化浏览器</b>，植物会主动弹通知到桌面右上角。这里可立即预览效果：</p>
+                  <label style="font-size:.85rem;color:var(--text-soft);font-weight:700;display:block;margin-bottom:.5rem">🪟 评委测试：模拟最小化时的桌面推送</label>
+                  <p style="font-size:.78rem;color:var(--text-mute);margin-bottom:.7rem;line-height:1.6">开启桌面通知后，<b>最小化浏览器</b>，植物会主动弹通知到桌面右上角。这里可立即预览效果：</p>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
                     <button class="btn btn-ghost" onclick="testDesktopNotify('morning')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🌅 早安</button>
                     <button class="btn btn-ghost" onclick="testDesktopNotify('thirsty')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">🥺 渴了</button>
@@ -1143,7 +1223,7 @@ a{color:inherit;text-decoration:none}
                     <button class="btn btn-ghost" onclick="testDesktopNotify('weather')" style="padding:.5rem .6rem;font-size:.8rem;justify-content:center">☀️ 天气</button>
                   </div>
                   <button class="btn btn-sun" onclick="testDesktopNotifySimulate()" style="width:100%;justify-content:center;margin-top:.6rem">🎭 模拟最小化场景（5秒后弹通知）</button>
-                  <p style="font-size:.75rem;color:var(--stone-400);margin-top:.5rem;line-height:1.5">点击后会等5秒，请<b>立即最小化浏览器</b>，5秒后桌面会收到通知+标题闪烁+角标数字。</p>
+                  <p style="font-size:.75rem;color:var(--text-mute);margin-top:.5rem;line-height:1.5">点击后会等5秒，请<b>立即最小化浏览器</b>，5秒后桌面会收到通知+标题闪烁+角标数字。</p>
                 </div>
               </div>
             </div>
@@ -1151,12 +1231,12 @@ a{color:inherit;text-decoration:none}
               <label class="switch" style="margin-bottom:1.1rem">
                 <input type="checkbox" id="aiSwitch" onchange="saveAiKey()">
                 <span class="track"></span>
-                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">开启AI智能对话</span>
+                <span style="font-weight:700;font-size:.9rem;color:var(--text)">开启AI智能对话</span>
               </label>
               <div class="field">
                 <label>智谱AI API Key（可选，留空使用内置 Key 直连）</label>
                 <input type="text" id="aiKeyInput" placeholder="留空 = 使用内置 Key（推荐）" onchange="saveAiKey()">
-                <p style="font-size:.78rem;color:var(--stone-400);margin-top:.4rem;line-height:1.5">
+                <p style="font-size:.78rem;color:var(--text-mute);margin-top:.4rem;line-height:1.5">
                   默认使用内置 Key 直连智谱（GLM-4-Flash 免费模型），开箱即用。如想用自己的 Key，可在 <a href="https://open.bigmodel.cn/" target="_blank" style="color:var(--green-600)">open.bigmodel.cn</a> 免费申请后填入此处。
                 </p>
               </div>
@@ -1164,9 +1244,9 @@ a{color:inherit;text-decoration:none}
               <label class="switch" style="margin-top:1.1rem">
                 <input type="checkbox" id="autoSpeakSwitch" onchange="toggleAutoSpeak()">
                 <span class="track"></span>
-                <span style="font-weight:700;font-size:.9rem;color:var(--stone-700)">🔊 自动语音朗读AI回复</span>
+                <span style="font-weight:700;font-size:.9rem;color:var(--text)">🔊 自动语音朗读AI回复</span>
               </label>
-              <p style="font-size:.78rem;color:var(--stone-400);margin-top:.4rem;line-height:1.5">
+              <p style="font-size:.78rem;color:var(--text-mute);margin-top:.4rem;line-height:1.5">
                 开启后每条AI回复会自动用声音"说"出来。每个品种有独立音色（绿萝温柔女声、仙人掌粗犷男声…），生病时语速变慢、开花时音调上扬。植物真的会"开口说话"。
               </p>
               <div style="display:flex;gap:.6rem;margin-top:.7rem">
@@ -1194,7 +1274,7 @@ a{color:inherit;text-decoration:none}
           </div>
           <div class="card" style="padding:1.6rem;margin-top:1.6rem">
             <h4 style="font-family:var(--font-display);color:var(--green-900);font-size:1.05rem;margin-bottom:.7rem;font-weight:800">📅 最近养护日历</h4>
-            <p style="font-size:.82rem;color:var(--stone-400);margin-bottom:.7rem">最近 30 天的浇水 / 晒太阳 / 修剪记录</p>
+            <p style="font-size:.82rem;color:var(--text-mute);margin-bottom:.7rem">最近 30 天的浇水 / 晒太阳 / 修剪记录</p>
             <div class="calendar" id="calendar"></div>
             <div class="cal-legend">
               <span><i style="background:var(--sky-400)"></i>浇水</span>
@@ -1284,9 +1364,9 @@ a{color:inherit;text-decoration:none}
         <div class="radio-opt" data-status="old" onclick="selectStatus(this)">📅 已经养了一阵</div>
       </div>
       <div class="custom-days-row" id="customDaysRow" style="display:none">
-        <label style="font-size:.85rem;color:var(--stone-600);font-weight:700">已养多少天？
+        <label style="font-size:.85rem;color:var(--text-soft);font-weight:700">已养多少天？
           <input type="number" id="customDays" min="1" max="365" value="7" style="width:80px;margin-left:.5rem;padding:.4rem .6rem;border:1.5px solid var(--green-100);border-radius:8px">
-          <span style="font-size:.78rem;color:var(--stone-400)">天（影响陪伴天数与初始水分）</span>
+          <span style="font-size:.78rem;color:var(--text-mute)">天（影响陪伴天数与初始水分）</span>
         </label>
       </div>
     </div>
@@ -1346,7 +1426,7 @@ a{color:inherit;text-decoration:none}
       <div id="cameraError" style="display:none;padding:2rem;text-align:center;color:#fff">
         <p style="font-size:1.1rem;margin-bottom:.5rem">📷 无法访问摄像头</p>
         <p style="font-size:.85rem;opacity:.8;margin-bottom:1rem">请允许浏览器使用摄像头权限<br>或检查设备是否有摄像头</p>
-        <button class="btn btn-ghost" onclick="document.getElementById('cameraAlbumInput').click()" style="background:#fff;color:var(--green-700);font-size:.85rem;padding:.6rem 1.2rem">📁 从相册选择图片</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('cameraAlbumInput').click()" style="background:var(--surface);color:var(--green-700);font-size:.85rem;padding:.6rem 1.2rem">📁 从相册选择图片</button>
       </div>
     </div>
     <div style="display:flex;gap:.8rem;margin-top:1.2rem;justify-content:center;flex-wrap:wrap">
@@ -1378,12 +1458,30 @@ a{color:inherit;text-decoration:none}
   </div>
 </div>
 
+<!-- 陪伴报告模态框 -->
+<div class="modal" id="reportModal">
+  <div class="modal-card" style="max-width:440px;text-align:center">
+    <button class="modal-close" onclick="document.getElementById('reportModal').classList.remove('show')">✕</button>
+    <div class="modal-head">
+      <h3>📋 我的陪伴报告</h3>
+      <p class="sub">一起走过的日子，植物都记着呢</p>
+    </div>
+    <div id="reportCanvasWrap" style="border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow);background:linear-gradient(135deg,#f0fdf4,#fefce8)">
+      <canvas id="reportCanvas" width="400" height="640" style="width:100%;display:block"></canvas>
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:1.2rem">
+      <button class="btn btn-ghost" onclick="document.getElementById('reportModal').classList.remove('show')" style="flex:1;justify-content:center">关闭</button>
+      <button class="btn btn-primary" onclick="downloadReport()" style="flex:1;justify-content:center">⬇ 保存报告</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 评委/新用户引导浮层 ===== -->
 <div class="modal" id="onboardingModal">
   <div class="modal-card" style="max-width:540px;text-align:center">
     <div style="font-size:3rem;margin-bottom:.6rem">🌿💚🩺</div>
     <h3 style="font-family:var(--font-display);font-size:1.5rem;color:var(--green-900);margin-bottom:.6rem;font-weight:800">欢迎来到植愈</h3>
-    <p style="color:var(--stone-500);font-size:.92rem;margin-bottom:1.4rem;line-height:1.6">
+    <p style="color:var(--text-mute);font-size:.92rem;margin-bottom:1.4rem;line-height:1.6">
       5 分钟体验 AI 植物陪伴的全部能力。<br>
       每一步都会自动展开，无需任何配置。
     </p>
@@ -1415,7 +1513,7 @@ a{color:inherit;text-decoration:none}
       </div>
     </div>
     <button class="btn btn-primary btn-lg" onclick="closeOnboarding()" style="width:100%;margin-top:1.3rem">开始体验 →</button>
-    <label style="display:block;margin-top:.8rem;font-size:.78rem;color:var(--stone-400)">
+    <label style="display:block;margin-top:.8rem;font-size:.78rem;color:var(--text-mute)">
       <input type="checkbox" id="onboardDontShow" style="margin-right:.4rem">不再显示这个引导
     </label>
   </div>
@@ -1449,20 +1547,20 @@ const EMAILJS_PUBLIC_KEY  = 'zt1HYl6awhYfxCyXe';
 
 // 品种知识库
 const SPECIES = {
-    '绿萝':   { emoji:'🌿', waterCycle:6,  light:'散射光', personality:'温柔乖巧，话不多但很贴心' },
-    '仙人掌': { emoji:'🌵', waterCycle:12, light:'喜阳',   personality:'嘴硬心软，嘴上抱怨其实很依赖你' },
-    '多肉':   { emoji:'🪴', waterCycle:12, light:'喜阳',   personality:'慵懒可爱，爱睡觉，说话慢悠悠' },
-    '月季':   { emoji:'🌸', waterCycle:4,  light:'喜阳',   personality:'活泼爱美，开花时特别开心，爱炫耀' },
-    '龟背竹': { emoji:'🌱', waterCycle:8,  light:'散射光', personality:'沉稳文艺，像个安静的朋友' },
-    '向日葵': { emoji:'🌻', waterCycle:2,  light:'强喜阳', personality:'元气满满，永远充满正能量' },
-    '薄荷':   { emoji:'🍃', waterCycle:2,  light:'喜阳',   personality:'清新活泼，长得快，爱说话' },
-    '吊兰':   { emoji:'🌾', waterCycle:5,  light:'散射光', personality:'随和乐观，像邻家朋友一样亲切' },
-    '芦荟':   { emoji:'🪴', waterCycle:10, light:'喜阳',   personality:'实用主义，低调靠谱，偶尔傲娇' },
-    '虎尾兰': { emoji:'🌿', waterCycle:10, light:'耐阴',   personality:'酷酷的，话少但句句在理' },
-    '富贵竹': { emoji:'🎋', waterCycle:5,  light:'散射光', personality:'优雅矜持，带着书卷气' },
-    '茉莉花': { emoji:'🌼', waterCycle:3,  light:'喜阳',   personality:'温柔浪漫，爱唱歌，香味治愈' },
-    '发财树': { emoji:'🌳', waterCycle:10, light:'散射光', personality:'稳重踏实，自带财运光环' },
-    '常春藤': { emoji:'🍃', waterCycle:5,  light:'耐阴',   personality:'攀爬高手，爱冒险，精力旺盛' }
+    '绿萝':   { emoji:'🌿', waterCycle:6,  light:'散射光', personality:'温柔乖巧，话不多但很贴心', careTips:'怕强光直射，土干透再浇透。冬天减水，叶面常喷水会更翠绿。' },
+    '仙人掌': { emoji:'🌵', waterCycle:12, light:'喜阳',   personality:'嘴硬心软，嘴上抱怨其实很依赖你', careTips:'宁干勿湿，冬天可一个月不浇水。喜强烈阳光，适合放南窗台。' },
+    '多肉':   { emoji:'🪴', waterCycle:12, light:'喜阳',   personality:'慵懒可爱，爱睡觉，说话慢悠悠', careTips:'叶片发软就是缺水信号。忌积水，盆底要有排水孔，多晒太阳才会变色。' },
+    '月季':   { emoji:'🌸', waterCycle:4,  light:'喜阳',   personality:'活泼爱美，开花时特别开心，爱炫耀', careTips:'花期需肥，每周薄肥勤施。注意通风防蚜虫，花后及时修剪残花。' },
+    '龟背竹': { emoji:'🌱', waterCycle:8,  light:'散射光', personality:'沉稳文艺，像个安静的朋友', careTips:'喜湿润，常擦叶面。气生根可引入土中增营养，避免暴晒。' },
+    '向日葵': { emoji:'🌻', waterCycle:2,  light:'强喜阳', personality:'元气满满，永远充满正能量', careTips:'需全日照，水要跟上但不积水。生长期施肥，花后可留种。' },
+    '薄荷':   { emoji:'🍃', waterCycle:2,  light:'喜阳',   personality:'清新活泼，长得快，爱说话', careTips:'越摘越长，勤修剪促进分枝。喜湿润，保持土壤微潮。' },
+    '吊兰':   { emoji:'🌾', waterCycle:5,  light:'散射光', personality:'随和乐观，像邻家朋友一样亲切', careTips:'极易养，分株繁殖。叶尖发褐是空气太干，多喷水。' },
+    '芦荟':   { emoji:'🪴', waterCycle:10, light:'喜阳',   personality:'实用主义，低调靠谱，偶尔傲娇', careTips:'叶片厚实储水，宁干勿湿。冬天半月一浇，夏季避免正午暴晒。' },
+    '虎尾兰': { emoji:'🌿', waterCycle:10, light:'耐阴',   personality:'酷酷的，话少但句句在理', careTips:'极耐旱，浇水过多易烂根。耐阴也耐晒，几乎不用管。' },
+    '富贵竹': { emoji:'🎋', waterCycle:5,  light:'散射光', personality:'优雅矜持，带着书卷气', careTips:'水培每周换水，土培见干见湿。叶尖发黄多是缺铁或受冻。' },
+    '茉莉花': { emoji:'🌼', waterCycle:3,  light:'喜阳',   personality:'温柔浪漫，爱唱歌，香味治愈', careTips:'花期需强光，光照不足不开花。花后勤剪，促二次开花。' },
+    '发财树': { emoji:'🌳', waterCycle:10, light:'散射光', personality:'稳重踏实，自带财运光环', careTips:'根系弱，最怕积水，10-15天一浇即可。冬季保暖，低于10℃会冻伤。' },
+    '常春藤': { emoji:'🍃', waterCycle:5,  light:'耐阴',   personality:'攀爬高手，爱冒险，精力旺盛', careTips:'喜凉爽湿润，耐阴。定期喷水增湿，枝条过长可修剪促密。' }
 };
 
 // 成就定义
@@ -1635,7 +1733,7 @@ const STORE = {
     diagnose:      'zhiyu_diagnose'
 };
 // 数据版本：每次发版更新此值，换版本时自动清除旧数据，保证功能不失效
-const APP_VERSION = '3.4.0';
+const APP_VERSION = '3.5.0';
 function load(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
 function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 // 设备指纹：取相对稳定的浏览器特征组合，用于"版本+设备"双绑定
@@ -1761,7 +1859,7 @@ function renderPlants(){
         return `
           <div class="plant-card" onclick="openDetail('${p.id}')">
             ${photo}
-            <span class="plant-emoji">${SPECIES[p.species].emoji}</span>
+            <span class="plant-emoji">${SPECIES[p.species].emoji}<span class="mood-emoji">${getMoodEmoji(p, st)}</span></span>
             <div class="name">${esc(p.name)}</div>
             <div class="species">${p.species} · ${SPECIES[p.species].light}</div>
             <span class="mood-badge ${st.moodClass}">${st.moodText}</span>
@@ -1773,6 +1871,16 @@ function renderPlants(){
 }
 
 /* ===== 6. 渲染：植物详情 ===== */
+// 植物情绪表情：根据健康值/水分/开花/生病返回 emoji，让状态一眼可见
+function getMoodEmoji(p, st){
+    if(p.sick) return '🥺';
+    if(p.blooming) return '🥰';
+    if(st.mood === 'veryThirsty') return '😖';
+    if(st.mood === 'thirsty') return '😔';
+    if(st.health >= 80) return '😊';
+    if(st.health >= 50) return '😐';
+    return '😟';
+}
 function openDetail(id){
     const p = plants.find(x=>x.id===id);
     if(!p) return;
@@ -1785,11 +1893,11 @@ function openDetail(id){
     const isDroop = st.moodClass==='thirsty' || st.moodClass==='sick';
 
     document.getElementById('detailHero').innerHTML = `
-      <div class="detail-emoji ${isDroop?'droop':'sway'}">${spec.emoji}</div>
+      <div class="detail-emoji ${isDroop?'droop':'sway'}">${spec.emoji}<span class="mood-emoji detail">${getMoodEmoji(p, st)}</span></div>
       <div class="detail-name">${esc(p.name)}</div>
       <div class="detail-meta">${p.species} · 喜${spec.light} · 建议${spec.waterCycle}天浇一次</div>
       <div class="detail-mood"><span class="mood-badge ${st.moodClass}">${st.moodText}</span></div>
-      <div style="color:var(--stone-400);font-size:.85rem;margin-top:.7rem;font-weight:600">💚 已经陪伴你 ${companionDays} 天</div>
+      <div style="color:var(--text-mute);font-size:.85rem;margin-top:.7rem;font-weight:600">💚 已经陪伴你 ${companionDays} 天</div>
       <div class="status-list">
         <div class="status-item"><div class="status-row"><span>💧 水分</span><span>${st.waterPct}%</span></div><div class="status-bar"><div class="fill fill-water" style="width:${st.waterPct}%"></div></div></div>
         <div class="status-item"><div class="status-row"><span>☀️ 光照</span><span>${Math.min(100,30+p.sunLog.length*15)}%</span></div><div class="status-bar"><div class="fill fill-sun" style="width:${Math.min(100,30+p.sunLog.length*15)}%"></div></div></div>
@@ -1803,6 +1911,7 @@ function openDetail(id){
         <button class="care-btn prune" onclick="doCare('prune')"><span class="ic">✂️</span>修剪/施肥</button>
         <button class="care-btn diagnose" onclick="startDiagnose()"><span class="ic">🩺</span>拍照体检</button>
       </div>
+      ${spec.careTips ? `<div class="care-tips-card"><div class="ct-head">🌱 ${p.species}养护小贴士</div><div class="ct-body">${esc(spec.careTips)}</div></div>` : ''}
       <div id="diagnoseResult" style="display:none"></div>`;
 
     document.getElementById('chatAvatar').textContent = spec.emoji;
@@ -2846,6 +2955,7 @@ function submitPlant(){
     if(plants.length>=5) unlockAchv('small_forest');
     checkCompanionAchievements();
     renderPlants();
+    renderStats();
 }
 function deletePlant(){
     const p = plants.find(x=>x.id===currentPlantId);
@@ -2861,6 +2971,7 @@ function deletePlant(){
     currentPlantId = null;
     showView('list');
     checkAchievements();
+    renderStats();
 }
 
 /* ===== 11. 日记 ===== */
@@ -3427,7 +3538,7 @@ function updatePushStatusUI(){
         el.style.color = 'var(--rose-500)';
     } else {
         el.innerHTML = '⚪ 未授权 · 点击上方按钮允许通知';
-        el.style.color = 'var(--stone-500)';
+        el.style.color = 'var(--text-mute)';
     }
 }
 
@@ -4159,6 +4270,121 @@ function downloadShareCard(){
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     showToast('✅ 已保存到下载文件夹');
 }
+
+/* ===== 19.10 陪伴报告：汇总全花园数据，Canvas 绘制可分享报告 ===== */
+let _reportDataUrl = null;
+function openReportModal(){
+    if(!plants.length){ showToast('⚠️ 还没有植物，先添加一盆吧','warn'); return; }
+    document.getElementById('reportModal').classList.add('show');
+    drawReportCard();
+}
+function drawReportCard(){
+    const canvas = document.getElementById('reportCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    // 汇总数据
+    let earliest = Date.now();
+    let totalWater = 0, totalSun = 0, totalPrune = 0, totalChat = 0;
+    plants.forEach(p=>{
+        if(p.addedAt < earliest) earliest = p.addedAt;
+        totalWater += (p.waterLog||[]).length;
+        totalSun += (p.sunLog||[]).length;
+        totalPrune += (p.pruneLog||[]).length;
+        totalChat += (p.chat||[]).filter(m=>m.from==='plant').length;
+    });
+    const days = Math.max(1, Math.floor((Date.now() - earliest) / 86400000));
+    const diaryCount = (diary||[]).length;
+    const achvCount = (unlockedAchv||[]).length;
+    // 找最长情陪伴的植物
+    let oldestPlant = null, oldestDays = 0;
+    plants.forEach(p=>{
+        const d = Math.floor((Date.now() - p.addedAt) / 86400000);
+        if(d > oldestDays){ oldestDays = d; oldestPlant = p; }
+    });
+
+    // 背景渐变
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#f0fdf4'); bg.addColorStop(.5,'#fefce8'); bg.addColorStop(1,'#ecfdf5');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+    // 装饰圆
+    ctx.fillStyle = 'rgba(34,197,94,.08)'; ctx.beginPath(); ctx.arc(60,80,80,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(251,191,36,.08)'; ctx.beginPath(); ctx.arc(340,560,90,0,Math.PI*2); ctx.fill();
+
+    // 标题
+    ctx.fillStyle = '#15803d'; ctx.font = 'bold 26px "PingFang SC",sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🌿 我的陪伴报告', W/2, 50);
+    ctx.fillStyle = '#78716c'; ctx.font = '13px sans-serif';
+    ctx.fillText(new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}), W/2, 72);
+
+    // 主数据区
+    const cards = [
+        { num: plants.length, label: '养护植物', icon: '🌱' },
+        { num: days, label: '陪伴天数', icon: '💚' },
+        { num: totalWater, label: '浇水次数', icon: '💧' },
+        { num: totalChat, label: '收到消息', icon: '💬' }
+    ];
+    cards.forEach((c,i)=>{
+        const x = 40 + (i%2)*165, y = 100 + Math.floor(i/2)*95;
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        roundRect(ctx, x, y, 145, 78, 12); ctx.fill();
+        ctx.font = '20px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(c.icon, x+12, y+30);
+        ctx.fillStyle = '#16a34a'; ctx.font = 'bold 30px "PingFang SC",sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(c.num, x+132, y+45);
+        ctx.fillStyle = '#78716c'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(c.label, x+12, y+65);
+    });
+
+    // 次数据
+    ctx.fillStyle = '#57534e'; ctx.font = '13px sans-serif'; ctx.textAlign = 'left';
+    const subY = 310;
+    ctx.fillText('☀️ 晒太阳 ' + totalSun + ' 次', 40, subY);
+    ctx.fillText('✂️ 修剪 ' + totalPrune + ' 次', 220, subY);
+    ctx.fillText('📖 写日记 ' + diaryCount + ' 篇', 40, subY+28);
+    ctx.fillText('🏆 解锁成就 ' + achvCount + ' 个', 220, subY+28);
+
+    // 最长情陪伴
+    if(oldestPlant){
+        const spec = SPECIES[oldestPlant.species] || {emoji:'🌿'};
+        ctx.fillStyle = 'rgba(34,197,94,.08)';
+        roundRect(ctx, 30, 360, W-60, 90, 14); ctx.fill();
+        ctx.font = '40px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(spec.emoji, W/2, 405);
+        ctx.fillStyle = '#15803d'; ctx.font = 'bold 16px "PingFang SC",sans-serif';
+        ctx.fillText('最长情陪伴：' + oldestPlant.name, W/2, 430);
+        ctx.fillStyle = '#78716c'; ctx.font = '12px sans-serif';
+        ctx.fillText('已经陪你 ' + Math.max(1,oldestDays) + ' 天', W/2, 448);
+    }
+
+    // 植物阵容
+    ctx.fillStyle = '#15803d'; ctx.font = 'bold 14px "PingFang SC",sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('🌸 我的植物阵容', 40, 480);
+    const emojiLine = plants.slice(0,10).map(p=>SPECIES[p.species]?.emoji || '🌿').join(' ');
+    ctx.font = '22px sans-serif';
+    ctx.fillText(emojiLine + (plants.length>10?' …':''), 40, 512);
+
+    // 鼓励语
+    ctx.fillStyle = '#16a34a'; ctx.font = 'italic 14px "PingFang SC",sans-serif'; ctx.textAlign = 'center';
+    const encourage = days >= 100 ? '百日相伴，情比金坚 💚'
+        : days >= 30 ? '一个月啦，你已经是合格的植物家长 🌱'
+        : days >= 7 ? '一周陪伴，越来越默契 🌿'
+        : '缘分刚刚开始，未来可期 🌱';
+    ctx.fillText(encourage, W/2, 555);
+
+    // 品牌
+    ctx.fillStyle = '#a8a29e'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('植愈 ZhiYu · 每一盆植物，都值得被温柔以待', W/2, H-20);
+
+    _reportDataUrl = canvas.toDataURL('image/png');
+}
+function downloadReport(){
+    if(!_reportDataUrl){ showToast('⚠️ 报告还在生成中…','warn'); return; }
+    const a = document.createElement('a');
+    a.href = _reportDataUrl;
+    a.download = '植愈陪伴报告_' + new Date().toLocaleDateString('zh-CN').replace(/\//g,'') + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showToast('✅ 报告已保存');
+}
 function getCompanionDays(p){
     return Math.max(1, Math.floor((Date.now() - p.addedAt) / 86400000));
 }
@@ -4176,10 +4402,56 @@ function closeOnboarding(){
         if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
     }, 200);
 }
+/* ===== 主题切换（浅色/深色） ===== */
+function initTheme(){
+    try{
+        const saved = localStorage.getItem('zhiyu_theme');
+        const theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        updateThemeToggleUI(theme);
+    }catch(e){}
+    const btn = document.getElementById('themeToggle');
+    if(btn) btn.addEventListener('click', toggleTheme);
+}
+function toggleTheme(){
+    const cur = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('zhiyu_theme', next); }catch(e){}
+    updateThemeToggleUI(next);
+}
+function updateThemeToggleUI(theme){
+    const isDark = theme === 'dark';
+    const btn = document.getElementById('themeToggle');
+    if(btn) btn.textContent = isDark ? '☀️' : '🌙';
+    const mobileBtn = document.querySelector('.mobile-menu .theme-toggle');
+    if(mobileBtn) mobileBtn.textContent = isDark ? '☀️ 切换浅色' : '🌙 切换深色';
+}
+
+/* ===== 首页陪伴数据总览 ===== */
+function renderStats(){
+    const bar = document.getElementById('statsBar');
+    if(!bar) return;
+    // 总陪伴天数：取所有植物里最早领养的那株到现在
+    let earliest = Date.now();
+    plants.forEach(p=>{ if(p.adoptTs && p.adoptTs < earliest) earliest = p.adoptTs; });
+    const days = plants.length ? Math.max(1, Math.floor((Date.now() - earliest) / 86400000)) : 0;
+    const diaryCount = (diary || []).length;
+    const achvCount = (unlockedAchv || []).length;
+    bar.innerHTML = `
+        <div class="stat"><div class="num">${plants.length}</div><div class="label">🌱 养护中</div></div>
+        <div class="stat"><div class="num">${days}</div><div class="label">💚 陪伴天数</div></div>
+        <div class="stat"><div class="num">${diaryCount}</div><div class="label">📖 日记篇数</div></div>
+        <div class="stat"><div class="num">${achvCount}</div><div class="label">🏆 解锁成就</div></div>
+    `;
+}
+
 function init(){
     seedSampleData();
     setupNav();
+    initTheme();
     renderPlants();
+    renderStats();
     renderDiary();
     renderAchievements();
     // 成就检测延迟到引导浮层关闭后执行，避免示例数据触发庆祝弹窗盖住引导
